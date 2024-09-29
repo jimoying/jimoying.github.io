@@ -5,7 +5,7 @@
   
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
-  <link rel="dns-prefetch" href="https://jimoying.github.io">
+  <link rel="dns-prefetch" href="https://jimoying.github.io11111">
   <title>季末影</title>
   <meta name="generator" content="hexo-theme-yilia-plus">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -17,7 +17,7 @@
   <meta name="description" content="我是描述">
 <meta property="og:type" content="website">
 <meta property="og:title" content="季末影">
-<meta property="og:url" content="https://jimoying.github.io/aaa/index.html">
+<meta property="og:url" content="https://jimoying.github.io11111/aaa/index.html">
 <meta property="og:site_name" content="季末影">
 <meta property="og:description" content="我是描述">
 <meta property="og:locale" content="zh_CN">
@@ -611,6 +611,291 @@
 
 
   
+    <article id="post-java/新建文件夹/java异步任务编排-1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+  <div class="article-entry" itemprop="articleBody">
+    
+    <h1 id="java队列异步处理任务-java异步编排"><a href="#java队列异步处理任务-java异步编排" class="headerlink" title="java队列异步处理任务 java异步编排"></a>java队列异步处理任务 java异步编排</h1><p>转载</p>
+<p><a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099196">mob6454cc65e0f6</a> 2023-09-30 11:44:03</p>
+<p><strong><em>文章标签</em> <a target="_blank" rel="noopener" href="https://blog.51cto.com/topic/e2c4ea6c2a2ab05.html">java队列异步处理任务</a> <a target="_blank" rel="noopener" href="https://blog.51cto.com/topic/multithreading.html">多线程</a> <a target="_blank" rel="noopener" href="https://blog.51cto.com/topic/java.html">java</a> <a target="_blank" rel="noopener" href="https://blog.51cto.com/topic/system.html">System</a> <a target="_blank" rel="noopener" href="https://blog.51cto.com/topic/xianchengchi.html">线程池</a></strong> <strong><em>文章分类</em> <a target="_blank" rel="noopener" href="https://blog.51cto.com/nav/java">Java</a> <a target="_blank" rel="noopener" href="https://blog.51cto.com/nav/program">后端开发</a></strong></p>
+<h4 id="异步任务编排CompletableFuture"><a href="#异步任务编排CompletableFuture" class="headerlink" title="异步任务编排CompletableFuture"></a>异步任务编排CompletableFuture</h4><blockquote>
+<p>特别说明：JDK1.8+之后引入 CompletableFuture</p>
+</blockquote>
+<h5 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h5><p>在一些需求中，我们常常要给前端返回一些复杂的视图数据，数据之间可能有关联，比如查询了A数据之后才可以根据A数据中的一些信息来查询B数据。</p>
+<p>再比如 查询A数据与查询B数据一般没有相关性。假设查询A数据需要1秒,查询B数据需要1秒，那么以往的写法中，第一种情况返回给前端的时间总共花费2秒，</p>
+<p>第二种情况返回给前端的时间也会是2秒。但这并不是我们愿意看到的，既然A数据跟B数据没有依赖性很强的情况下，应该可以并行查询进行封装，这样返回给前端的时间只需要花费1秒，这样大大增大了吞吐量，所以可以使用异步编排来解决该问题。</p>
+<h5 id="1-创建异步对象"><a href="#1-创建异步对象" class="headerlink" title="1.创建异步对象"></a>1.创建异步对象</h5><p>提供四个静态方法来创建一个异步操作。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">//创建异步</span><br><span class="line">public static CompletableFuture&lt;Void&gt; runAsync(Runnable runnable);</span><br><span class="line">//创建异步，支持传入线程池</span><br><span class="line">public static CompletableFuture&lt;Void&gt; runAsync(Runnable runnable, Executor executor);</span><br><span class="line">//创建异步,并返回执行后的结果</span><br><span class="line">public static &lt;U&gt; CompletableFuture&lt;U&gt; supplyAsync(Supplier&lt;U&gt; sup);</span><br><span class="line">//创建异步,支持传入线程池,并返回执行后的结果</span><br><span class="line">public static &lt;U&gt; CompletableFuture&lt;U&gt; supplyAsync(Supplier&lt;U&gt; sup, Executor executor)</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>1.runAsync方法都没有返回结果,supplyAsync方法都是有返回结果.</p>
+<p>2.可以支持传入自己的线程池，或不传使用默认。</p>
+</blockquote>
+<p><strong>runAsync示例</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">//创建一个线程池</span><br><span class="line">ExecutorService executorService = Executors.newFixedThreadPool(5);</span><br><span class="line">//第一种方式: runAsync</span><br><span class="line">CompletableFuture.runAsync(() -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;执行runAsync方法....&quot;);</span><br><span class="line">&#125;, executorService);</span><br><span class="line">System.out.println(&quot;执行main方法....&quot;);</span><br><span class="line">//结果:</span><br><span class="line">//执行main方法....</span><br><span class="line">//执行runAsync方法....</span><br></pre></td></tr></table></figure>
+
+<p><strong>supplyAsync示例</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">//创建一个线程池</span><br><span class="line">ExecutorService executorService = Executors.newFixedThreadPool(5); </span><br><span class="line">//第二种方式:supplyAsync</span><br><span class="line">CompletableFuture&lt;String&gt; future = CompletableFuture.supplyAsync(() -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;执行supplyAsync方法...&quot;);</span><br><span class="line">    return &quot;hello,world&quot;;</span><br><span class="line">&#125;, executorService);</span><br><span class="line">System.out.println(&quot;返回的结果是:&quot;+future.get());</span><br><span class="line">System.out.println(&quot;执行main方法....&quot;);</span><br><span class="line">/**</span><br><span class="line">结果:</span><br><span class="line">执行supplyAsync方法...</span><br><span class="line">返回的结果是:hello,world</span><br><span class="line">执行main方法....</span><br><span class="line">*/</span><br></pre></td></tr></table></figure>
+
+<h5 id="2-完成回调和异常感知"><a href="#2-完成回调和异常感知" class="headerlink" title="2.完成回调和异常感知"></a>2.完成回调和异常感知</h5><p>某个异步任务完成之后执行某个任务</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">public CompletableFuture&lt;T&gt; whenComplete(</span><br><span class="line">        BiConsumer&lt;? super T, ? super Throwable&gt; action);</span><br><span class="line">//成功后回调异步执行,arg1:上次执行的结果，arg2:上次执行的异常</span><br><span class="line">public CompletableFuture&lt;T&gt; whenCompleteAsync(</span><br><span class="line">        BiConsumer&lt;? super T, ? super Throwable&gt; action);</span><br><span class="line">//成功后回调异步执行,支持传入自己的线程池。arg1:上次执行的结果，arg2:上次执行的异常 </span><br><span class="line">public CompletableFuture&lt;T&gt; whenCompleteAsync(</span><br><span class="line">        BiConsumer&lt;? super T, ? super Throwable&gt; action, Executor executor);</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>whenComplete与whenCompleteAsync 区别在于 一个是上一个执行完的线程继续执行,一个是交由其他线程来执行。</p>
+</blockquote>
+<p><strong>whenComplete示例</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">//创建一个线程池</span><br><span class="line">ExecutorService executorService = Executors.newFixedThreadPool(5);</span><br><span class="line">//完成回调  成功后执行某个事情</span><br><span class="line">CompletableFuture.supplyAsync(()-&gt;&#123;</span><br><span class="line">    System.out.println(&quot;刷牙....&quot;);</span><br><span class="line">    return &quot;先刷牙&quot;;</span><br><span class="line">&#125;,executorService).whenComplete((res,err)-&gt;&#123;</span><br><span class="line">    System.out.println(&quot;洗脸...&quot;+&quot;上一次结果:&quot;+res+&quot;--错误:&quot;+err);</span><br><span class="line">&#125;);</span><br><span class="line">System.out.println(&quot;执行main方法....&quot;);</span><br><span class="line">/*</span><br><span class="line">刷牙....</span><br><span class="line">洗脸...上一次结果:先刷牙--错误:null</span><br><span class="line">执行main方法....</span><br><span class="line">*/</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">//创建一个线程池</span><br><span class="line">ExecutorService executorService = Executors.newFixedThreadPool(5);</span><br><span class="line">//完成回调  成功后执行某个事情</span><br><span class="line">CompletableFuture.supplyAsync(()-&gt;&#123;</span><br><span class="line">    System.out.println(&quot;刷牙....&quot;);</span><br><span class="line">    int i=1/0;</span><br><span class="line">    return &quot;先刷牙&quot;;</span><br><span class="line">&#125;,executorService).whenComplete((res,err)-&gt;&#123;</span><br><span class="line">    System.out.println(&quot;洗脸...&quot;+&quot;上一次结果:&quot;+res+&quot;--错误:&quot;+err);</span><br><span class="line">&#125;);</span><br><span class="line">System.out.println(&quot;执行main方法....&quot;);</span><br><span class="line">/*</span><br><span class="line">执行main方法....</span><br><span class="line">刷牙....</span><br><span class="line">洗脸...上一次结果:null--错误:java.util.concurrent.CompletionException: java.lang.ArithmeticException: / by zero</span><br><span class="line">*/</span><br></pre></td></tr></table></figure>
+
+<p>虽然能得到异常信息，但是没办法修改返回数据。使用方法exceptionally可以得到解决。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">//创建一个线程池</span><br><span class="line">ExecutorService executorService = Executors.newFixedThreadPool(5);</span><br><span class="line">//完成回调  成功后执行某个事情</span><br><span class="line">CompletableFuture&lt;String&gt; exceptionally = CompletableFuture.supplyAsync(() -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;刷牙....&quot;);</span><br><span class="line">    int i = 1 / 0;</span><br><span class="line">    return &quot;先刷牙&quot;;</span><br><span class="line">&#125;, executorService).whenComplete((res, err) -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;洗脸...&quot; + &quot;上一次结果:&quot; + res + &quot;--错误:&quot; + err);</span><br><span class="line">&#125;).exceptionally(e-&gt;&#123;</span><br><span class="line">    return &quot;异常了&quot;;</span><br><span class="line">&#125;);</span><br><span class="line">System.out.println(&quot;执行结果:&quot;+exceptionally.get());</span><br><span class="line">System.out.println(&quot;执行main方法....&quot;);</span><br><span class="line">/*</span><br><span class="line">刷牙....</span><br><span class="line">洗脸...上一次结果:null--错误:java.util.concurrent.CompletionException: java.lang.ArithmeticException: / by zero</span><br><span class="line">执行结果:异常了</span><br><span class="line">执行main方法....</span><br><span class="line">*/</span><br></pre></td></tr></table></figure>
+
+<h5 id="3-使用handle方法"><a href="#3-使用handle方法" class="headerlink" title="3.使用handle方法"></a>3.使用handle方法</h5><p>以上的whenComplete 以及exceptionally 都可以用handler代替</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">//由上一个执行的线程来继续执行  T:上一次执行的结果  U:返回结果</span><br><span class="line">public &lt;U&gt; CompletableFuture&lt;U&gt; handle(</span><br><span class="line">        BiFunction&lt;? super T, Throwable, ? extends U&gt; fn);</span><br><span class="line">//由其他线程来执行 T:上一次执行的结果  U:返回结果</span><br><span class="line">public &lt;U&gt; CompletableFuture&lt;U&gt; handleAsync(</span><br><span class="line">        BiFunction&lt;? super T, Throwable, ? extends U&gt; fn);</span><br><span class="line">//由其他线程来执行，支持传入线程池。 T:上一次执行的结果  U:返回结果</span><br><span class="line">public &lt;U&gt; CompletableFuture&lt;U&gt; handleAsync(</span><br><span class="line">        BiFunction&lt;? super T, Throwable, ? extends U&gt; fn, Executor executor);</span><br></pre></td></tr></table></figure>
+
+<p><strong>handle示例</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">//创建一个线程池</span><br><span class="line">ExecutorService executorService = Executors.newFixedThreadPool(5);</span><br><span class="line">CompletableFuture&lt;String&gt; handle = CompletableFuture.supplyAsync(() -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;刷牙...&quot;);</span><br><span class="line">    int i = 1 / 0;</span><br><span class="line">    return &quot;正常刷完牙了&quot;;</span><br><span class="line">&#125;).handleAsync((res, err) -&gt; &#123;</span><br><span class="line">    if (res != null) &#123;</span><br><span class="line">        return res;</span><br><span class="line">    &#125;</span><br><span class="line">    if (err != null) &#123;</span><br><span class="line">        return &quot;刷牙的时候有问题&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">    return &quot;返回值是null,但也没抛异常&quot;;</span><br><span class="line">&#125;,executorService);</span><br><span class="line">System.out.println(&quot;执行结果:&quot;+handle.get());</span><br><span class="line">System.out.println(&quot;执行main方法....&quot;);</span><br><span class="line">/*</span><br><span class="line">刷牙...</span><br><span class="line">执行结果:刷牙的时候有问题</span><br><span class="line">执行main方法....</span><br><span class="line">*/</span><br></pre></td></tr></table></figure>
+
+<h5 id="4-线程串行化方法"><a href="#4-线程串行化方法" class="headerlink" title="4.线程串行化方法"></a>4.线程串行化方法</h5><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">//上一个任务执行后，接下来执行的任务  由上一次任务执行后的线程继续执行.</span><br><span class="line">public CompletableFuture&lt;Void&gt; thenRun(Runnable action);</span><br><span class="line">//上一个任务执行后，接下来执行的任务  由不同的线程继续执行.</span><br><span class="line">public CompletableFuture&lt;Void&gt; thenRunAsync(Runnable action);</span><br><span class="line">//上一个任务执行后，接下来执行的任务  由线程池继续执行.</span><br><span class="line">public CompletableFuture&lt;Void&gt; thenRunAsync(Runnable action,Executor executor);</span><br><span class="line"></span><br><span class="line">//上一个任务执行后，接收并接下来执行的任务</span><br><span class="line">public CompletableFuture&lt;Void&gt; thenAccept(Consumer&lt;? super T&gt; action)；</span><br><span class="line">//上一个任务执行后，接收并接下来执行的任务</span><br><span class="line">public CompletableFuture&lt;Void&gt; thenAcceptAsync(Consumer&lt;? super T&gt; action)；</span><br><span class="line">//上一个任务执行后，接收并接下来执行的任务</span><br><span class="line">public CompletableFuture&lt;Void&gt; thenAcceptAsync(Consumer&lt;? super T&gt; action,Executor executor)；</span><br><span class="line"></span><br><span class="line">//上一个任务执行后，接收并接下来执行的任务,并返回结果</span><br><span class="line">public &lt;U&gt; CompletableFuture&lt;U&gt; thenApply(Function&lt;? super T,? extends U&gt; fn);</span><br><span class="line">//上一个任务执行后，接收并接下来执行的任务,并返回结果</span><br><span class="line">public &lt;U&gt; CompletableFuture&lt;U&gt; thenApplyAsync( Function&lt;? super T,? extends U&gt; fn) ;</span><br><span class="line">//上一个任务执行后，接收并接下来执行的任务,并返回结果</span><br><span class="line">public &lt;U&gt; CompletableFuture&lt;U&gt; thenApplyAsync(Function&lt;? super T,? extends U&gt; fn, Executor executor);</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>thenRun都是无返回值的，不需要上一次任务执行的结果。</p>
+<p>thenAccept 都是可以接收到上一次任务执行的结果，用于下一次执行使用。</p>
+<p>thenApply 接收上一次执行的结果，并有返回值。</p>
+</blockquote>
+<p><strong>thenRun示例</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">//创建一个线程池</span><br><span class="line">ExecutorService executorService = Executors.newFixedThreadPool(5);</span><br><span class="line">CompletableFuture&lt;Void&gt; future = CompletableFuture.supplyAsync(() -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;刷牙...&quot;);</span><br><span class="line">    return null;</span><br><span class="line">&#125;, executorService).thenRun(() -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;洗脸&quot;);</span><br><span class="line">&#125;);</span><br><span class="line">//阻塞等待方法</span><br><span class="line">future.get();</span><br><span class="line">/*</span><br><span class="line">刷牙...</span><br><span class="line">洗脸</span><br><span class="line">*/</span><br></pre></td></tr></table></figure>
+
+<p><strong>thenAccept示例</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">//创建一个线程池</span><br><span class="line">ExecutorService executorService = Executors.newFixedThreadPool(5);</span><br><span class="line">CompletableFuture&lt;Void&gt; future = CompletableFuture.supplyAsync(() -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;刷牙...&quot;);</span><br><span class="line">    return &quot;我刷完了&quot;;</span><br><span class="line">&#125;, executorService).thenAcceptAsync(result -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;接收结果:&quot;+result);</span><br><span class="line">    System.out.println(&quot;洗脸&quot;);</span><br><span class="line">&#125;);</span><br><span class="line">//阻塞等待方法</span><br><span class="line">future.get();</span><br><span class="line">/*</span><br><span class="line">刷牙...</span><br><span class="line">接收结果:我刷完了</span><br><span class="line">洗脸</span><br><span class="line">*/</span><br></pre></td></tr></table></figure>
+
+<p><strong>thenApply示例</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">//创建一个线程池</span><br><span class="line">ExecutorService executorService = Executors.newFixedThreadPool(5);</span><br><span class="line">CompletableFuture&lt;String&gt; future = CompletableFuture.supplyAsync(() -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;刷牙...&quot;);</span><br><span class="line">    return &quot;我刷完了&quot;;</span><br><span class="line">&#125;, executorService).thenApplyAsync(result -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;接受结果:&quot;+result);</span><br><span class="line">    System.out.println(&quot;洗脸&quot;);</span><br><span class="line">    return &quot;我洗完了&quot;;</span><br><span class="line">&#125;);</span><br><span class="line">//阻塞等待方法</span><br><span class="line">String s = future.get();</span><br><span class="line">System.out.println(&quot;最终结果:&quot;+s);</span><br><span class="line">/*</span><br><span class="line">刷牙...</span><br><span class="line">接受结果:我刷完了</span><br><span class="line">洗脸</span><br><span class="line">最终结果:我洗完了</span><br><span class="line">*/</span><br></pre></td></tr></table></figure>
+
+<h5 id="5-两任务组合-都要完成"><a href="#5-两任务组合-都要完成" class="headerlink" title="5.两任务组合-都要完成"></a>5.两任务组合-都要完成</h5><p>当两个任务都执行完毕之后，再执行当前任务。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">//两个任务都完成,没有接收他们的结果，没有返回值</span><br><span class="line">public CompletableFuture&lt;Void&gt; runAfterBoth(CompletionStage&lt;?&gt; other,Runnable action) </span><br><span class="line">public CompletableFuture&lt;Void&gt; runAfterBothAsync(CompletionStage&lt;?&gt; other, Runnable action)</span><br><span class="line">public CompletableFuture&lt;Void&gt; runAfterBothAsync(CompletionStage&lt;?&gt; other,Runnable action, Executor executor);</span><br><span class="line">//两个任务都完成 ,接收他们的结果并执行新任务，没有返回值</span><br><span class="line">public &lt;U&gt; CompletableFuture&lt;Void&gt; thenAcceptBoth(CompletionStage&lt;? extends U&gt; other,BiConsumer&lt;? super T, ? super U&gt; action)</span><br><span class="line">public &lt;U&gt; CompletableFuture&lt;Void&gt; thenAcceptBothAsync(CompletionStage&lt;? extends U&gt; other,BiConsumer&lt;? super T, ? super U&gt; action);</span><br><span class="line">public &lt;U&gt; CompletableFuture&lt;Void&gt; thenAcceptBothAsync(CompletionStage&lt;? extends U&gt; other,BiConsumer&lt;? super T, ? super U&gt; action, Executor executor);</span><br><span class="line">//两个任务都完成 接收他们的结果并执行新任务 并返回当前任务的返回值。</span><br><span class="line">public &lt;U,V&gt; CompletableFuture&lt;V&gt; thenCombine(CompletionStage&lt;? extends U&gt; other,BiFunction&lt;? super T,? super U,? extends V&gt; fn) </span><br><span class="line">public &lt;U,V&gt; CompletableFuture&lt;V&gt; thenCombineAsync(CompletionStage&lt;? extends U&gt; other,BiFunction&lt;? super T,? super U,? extends V&gt; fn);</span><br><span class="line">public &lt;U,V&gt; CompletableFuture&lt;V&gt; thenCombineAsync(CompletionStage&lt;? extends U&gt; other,BiFunction&lt;? super T,? super U,? extends V&gt; fn, Executor executor);</span><br></pre></td></tr></table></figure>
+
+<p><strong>runAfterBoth示例</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">//创建一个线程池</span><br><span class="line">ExecutorService executorService = Executors.newFixedThreadPool(5);</span><br><span class="line">CompletableFuture&lt;String&gt; future1 = CompletableFuture.supplyAsync(() -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;刷牙...&quot;);</span><br><span class="line">    return &quot;我刷完了&quot;;</span><br><span class="line">&#125;, executorService);</span><br><span class="line"></span><br><span class="line">CompletableFuture&lt;String&gt; future2 = CompletableFuture.supplyAsync(() -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;洗脸...&quot;);</span><br><span class="line">    return &quot;我洗完了&quot;;</span><br><span class="line">&#125;, executorService);</span><br><span class="line">future1.runAfterBothAsync(future2, () -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;吃饭&quot;);</span><br><span class="line">&#125;, executorService);</span><br><span class="line">/*</span><br><span class="line">刷牙...</span><br><span class="line">洗脸...</span><br><span class="line">吃饭</span><br><span class="line">*/</span><br></pre></td></tr></table></figure>
+
+<p><strong>thenAcceptBoth示例</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">//创建一个线程池</span><br><span class="line">ExecutorService executorService = Executors.newFixedThreadPool(5);</span><br><span class="line">CompletableFuture&lt;String&gt; future1 = CompletableFuture.supplyAsync(() -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;刷牙...&quot;);</span><br><span class="line">    return &quot;我刷完了&quot;;</span><br><span class="line">&#125;, executorService);</span><br><span class="line"></span><br><span class="line">CompletableFuture&lt;String&gt; future2 = CompletableFuture.supplyAsync(() -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;洗脸...&quot;);</span><br><span class="line">    return &quot;我洗完了&quot;;</span><br><span class="line">&#125;, executorService);</span><br><span class="line">future1.thenAcceptBothAsync(future2, (f1,f2) -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;接受f1结果:&quot;+f1);</span><br><span class="line">    System.out.println(&quot;接受f2结果:&quot;+f2);</span><br><span class="line">    System.out.println(&quot;吃饭&quot;);</span><br><span class="line">&#125;, executorService);</span><br><span class="line">/*</span><br><span class="line">刷牙...</span><br><span class="line">洗脸...</span><br><span class="line">接受f1结果:我刷完了</span><br><span class="line">接受f2结果:我洗完了</span><br><span class="line">吃饭</span><br><span class="line">*/</span><br></pre></td></tr></table></figure>
+
+<p><strong>thenCombine示例</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">//创建一个线程池</span><br><span class="line">ExecutorService executorService = Executors.newFixedThreadPool(5);</span><br><span class="line">CompletableFuture&lt;String&gt; future1 = CompletableFuture.supplyAsync(() -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;刷牙...&quot;);</span><br><span class="line">    return &quot;我刷完了&quot;;</span><br><span class="line">&#125;, executorService);</span><br><span class="line"></span><br><span class="line">CompletableFuture&lt;String&gt; future2 = CompletableFuture.supplyAsync(() -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;洗脸...&quot;);</span><br><span class="line">    return &quot;我洗完了&quot;;</span><br><span class="line">&#125;, executorService);</span><br><span class="line">CompletableFuture&lt;String&gt; future3 = future1.thenCombineAsync(future2, (f1, f2) -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;接受f1结果:&quot; + f1);</span><br><span class="line">    System.out.println(&quot;接受f2结果:&quot; + f2);</span><br><span class="line">    System.out.println(&quot;吃饭&quot;);</span><br><span class="line">    return &quot;吃完了&quot;;</span><br><span class="line">&#125;, executorService);</span><br><span class="line">String s = future3.get();</span><br><span class="line">System.out.println(&quot;最终结果:&quot;+s);</span><br><span class="line">/*</span><br><span class="line">刷牙...</span><br><span class="line">洗脸...</span><br><span class="line">接受f1结果:我刷完了</span><br><span class="line">接受f2结果:我洗完了</span><br><span class="line">吃饭</span><br><span class="line">最终结果:吃完了</span><br><span class="line">*/</span><br></pre></td></tr></table></figure>
+
+<h5 id="6-两任务组合-一个完成"><a href="#6-两任务组合-一个完成" class="headerlink" title="6.两任务组合-一个完成"></a>6.两任务组合-一个完成</h5><p>只要两个任务完成一个，就会触发第三个任务的执行。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">//接收某个任务执行完成的结果，有返回值.</span><br><span class="line">public &lt;U&gt; CompletableFuture&lt;U&gt; applyToEither(CompletionStage&lt;? extends T&gt; other, Function&lt;? super T, U&gt; fn) </span><br><span class="line">public &lt;U&gt; CompletableFuture&lt;U&gt; applyToEitherAsync(CompletionStage&lt;? extends T&gt; other, Function&lt;? super T, U&gt; fn)</span><br><span class="line">public &lt;U&gt; CompletableFuture&lt;U&gt; applyToEitherAsync(CompletionStage&lt;? extends T&gt; other, Function&lt;? super T, U&gt; fn</span><br><span class="line">                                                   ,Executor executor);</span><br><span class="line">//接收某个任务执行完成的结果，无返回值.</span><br><span class="line">public CompletableFuture&lt;Void&gt; acceptEither(CompletionStage&lt;? extends T&gt; other, Consumer&lt;? super T&gt; action) ;</span><br><span class="line">public CompletableFuture&lt;Void&gt; acceptEitherAsync(CompletionStage&lt;? extends T&gt; other, Consumer&lt;? super T&gt; action);</span><br><span class="line">public CompletableFuture&lt;Void&gt; acceptEitherAsync(CompletionStage&lt;? extends T&gt; other, Consumer&lt;? super T&gt; action,Executor executor);</span><br><span class="line">//不接收某个任务执行完成的结果，也无返回值.</span><br><span class="line">public CompletableFuture&lt;Void&gt; runAfterEither(CompletionStage&lt;?&gt; other, Runnable action);</span><br><span class="line">public CompletableFuture&lt;Void&gt; runAfterEitherAsync(CompletionStage&lt;?&gt; other,Runnable action) ;</span><br><span class="line">public CompletableFuture&lt;Void&gt; runAfterEitherAsync(CompletionStage&lt;?&gt; other,Runnable action,Executor executor);</span><br></pre></td></tr></table></figure>
+
+<p>本文章为转载内容，我们尊重原作者对文章享有的著作权。如有内容错误或侵权问题，欢迎原作者联系我们进行内容更正或删除文章。</p>
+<ul>
+<li><strong><a href="javascript:;"></a>赞</strong></li>
+<li><strong><a href="javascript:;"></a>收藏</strong></li>
+<li><strong><a href="javascript:;"></a>评论</strong></li>
+<li><strong><a href="javascript:;"></a>分享</strong></li>
+<li><strong><a href="javascript:;"></a>举报</strong></li>
+</ul>
+<p>上一篇：<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099196/7662206">android 如何在native绘制文本 安卓view绘制机制</a></p>
+<p>下一篇：<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099196/7663740">hadoop云计算平台 基于hadoop的云计算课程设计</a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.51cto.com/"><img src="https://ucenter.51cto.com/images/noavatar_middle.gif"></a></p>
+<p>提问和评论都可以，用心的回复会被更多人看到 <strong>评论</strong></p>
+<p><strong>发布评论</strong></p>
+<p><strong>全部评论</strong> () 最热 最新</p>
+<p><strong>相关文章</strong></p>
+<ul>
+<li><p>[</p>
+<p>CompletableFuture异步任务编排</p>
+<p>CompletableFuture异步任务编排</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_15890333/5885136">https://blog.51cto.com/u_15890333/5885136</a>)</p>
+<p>java 异步 Thread 返回结果 线程池</p>
+</li>
+<li><p>[</p>
+<p>java异步编排</p>
+<p># Java异步编排实现指南## 引言在Java开发中，我们经常会遇到需要执行多个耗时操作的场景，例如网络请求、数据库查询等。为了提高程序的性能和效率，我们可以使用异步编排的方式来处理这些耗时操作，使它们并行执行，从而节省总体执行时间。本文将介绍如何在Java中实现异步编排，并帮助新手开发者快速掌握这一技术。## 异步编排的流程下面是Java异步编排的一般流程，可以用表格展示：|</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16213344/7197245">https://blog.51cto.com/u_16213344/7197245</a>)</p>
+<p>异步任务 线程池 java</p>
+</li>
+<li><p>[</p>
+<p>java 异步多任务队列</p>
+<p>## Java 异步多任务队列### 引言在日常的编程中，我们经常会遇到需要同时处理多个任务的场景。传统的做法是使用多线程来实现并发处理，但多线程在面对大规模并发任务时会面临一些问题，如线程生命周期管理、上下文切换开销等。为了优化这些问题，Java提供了异步多任务队列的解决方案，使得任务可以在后台异步处理，提高并发性能和系统响应速度。### 什么是异步多任务队列异步多任务队列是一种</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16213445/6985908">https://blog.51cto.com/u_16213445/6985908</a>)</p>
+<p>线程池 任务队列 Java</p>
+</li>
+<li><p>[</p>
+<p>java队列异步处理任务 java异步编排</p>
+<p>异步任务编排CompletableFuture特别说明：JDK1.8+之后引入 CompletableFuture背景在一些需求中，我们常常要给前端返回一些复杂的视图数据，数据之间可能有关联，比如查询了A数据之后才可以根据A数据中的一些信息来查询B数据。再比如 查询A数据与查询B数据一般没有相关性。假设查询A数据需要1秒,查询B数据需要1秒，那么以往的写法中，第一种情况返回给前端的时间总共花费2秒</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099196/7662954">https://blog.51cto.com/u_16099196/7662954</a>)</p>
+<p>java队列异步处理任务 多线程 java System 线程池</p>
+</li>
+<li><p>[</p>
+<p>java异步任务队列框架 java异步编排</p>
+<p>一、CompletableFuture 异步编排1、业务场景 查询商品详情页的逻辑比较复杂，有些数据还需要远程调用，必然需要花费更多的时间。 假如商品详情页的每个查询，需要如下标注的时间才能完成 那么，用户需要 5.5s 后才能看到商品详情页的内容。很显然是不能接受的。 如果有多个线程同时完成这 6 步操作，也许只需要 1.5s 即可完成响应。2、java8 - CompletableFuture</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16213683/7545084">https://blog.51cto.com/u_16213683/7545084</a>)</p>
+<p>java异步任务队列框架 java 开发语言 后端 返回结果</p>
+</li>
+<li><p>[</p>
+<p>Java异步任务队列 java异步任务如何处理</p>
+<p>场景： 实际项目中，程序操作出了问题，后续要怎么处理是个很重要的问题，如果这个问题是同步操作引起的解决起来比较简单，比如用户注册，如果系统注册失败，后台可以马上返回错误信息，用户也可以马上看到错误点是什么。但是如果是异步操作，比如用户注册成功后，系统异步发送短信给用户，发短信的操作出问题了没有发出去，而且这个操作也不是用户主动操作了，所以可能会出现用户不知道你有这个操作，系统也没办法知道自己操作出</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_14120/6586434">https://blog.51cto.com/u_14120/6586434</a>)</p>
+<p>Java异步任务队列 消息队列 用户注册 异步操作</p>
+</li>
+<li><p>[</p>
+<p>java 如何处理异步队列 java异步任务队列</p>
+<p>什么是消息队列?消息队列，是一个以队列数据结构为基础的一个实体，这个实体是真实存在的。比如程序中的数组，数据库中的表或者redis等等。为什么要使用队列？什么情况下才会使用队列？实时性要求不高，比较耗时间的任务，是队列的最佳应用场景。比如说在某网站注册一个账号，当信息入库注册成功之后，该网站将会发送一封激活邮件，从而激活账号。而发送邮件的操作并不是需要实时响应的。不需要卡在注册界面，等待邮件发送成</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16213654/7317722">https://blog.51cto.com/u_16213654/7317722</a>)</p>
+<p>java 如何处理异步队列 缓存 数据库 消息队列</p>
+</li>
+<li><p>[</p>
+<p>java 异步socket 队列 java异步任务队列</p>
+<p>程序员的成长之路CompletableFuture是jdk8的新特性。CompletableFuture实现了CompletionStage接口和Future接口，前者是对后者的一个扩展，增加了异步会点、流式处理、多个Future组合处理的能力，使Java在处理多任务的协同工作时更加顺畅便利。一、创建异步任务1. supplyAsyncsupplyAsync是创建带有返回值的异步任务。它有如下两个</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099297/6793526">https://blog.51cto.com/u_16099297/6793526</a>)</p>
+<p>java 异步socket 队列 java servlet jvm 开发语言</p>
+</li>
+<li><p>[</p>
+<p>java 异步编排执行框架 java异步处理框架</p>
+<p>前两天看Spring框架参考手册，发现SpringMVC在4.0版本上支持异步请求处理。废话不多说，开始异步请求之旅。什么是异步请求处理？如果我们使用tomcat服务器来开发传统的servlet，那么用户的请求会经过以下流程进入到我们的servelt。客户端发送http请求到tomcat监听的端口。tomcat connector会接收该请求到线程中，并根据http协议解析该请求。解析完报文后，会</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16213626/7490659">https://blog.51cto.com/u_16213626/7490659</a>)</p>
+<p>java 异步编排执行框架 java http 异步请求框架 tomcat 异步请求 xml</p>
+</li>
+<li><p>[</p>
+<p>rxjava实现异步队列 java异步任务队列</p>
+<p>文章目录前言一、异步队列实现思路？二、实现步骤1.加入监听器2.实现监听器3.实现转交处理对象和转交处理线程4.自动转交异步处理5.业务如何添加 前言在某些场景下，操作比较耗时，给用户体验不是很好，这时候我们就会直接想到两种方案，一种是定时任务，一种就是异步队列，那些实时性要求不高，且比较耗时的任务，是队列的最佳应用场景。一、异步队列实现思路？持久化&#x3D;&gt;插入队列&#x3D;&gt;出队，当程序突然停</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_12831/6309203">https://blog.51cto.com/u_12831/6309203</a>)</p>
+<p>java 开发语言 异步处理 线程池 监听器</p>
+</li>
+<li><p>[</p>
+<p>java 测试消息队列 java消息队列异步处理任务</p>
+<p>说说这两种的区别，各自适合什么场景？用线程池ExecutorService异步处理：我理解ExecutorService其实也是内部使用了队列（如LinkedBlockingQueue），所以从设计上，其实和使用中间价的消息队列是差不多一致的。只是这里应用服务器既充当生产者又充当消费者，也是消息队列中间价的实现者。这种应该适合非分布式的架构，比如简单的只有一台服务器。使用消息队列：消息队列（指ac</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099311/7345747">https://blog.51cto.com/u_16099311/7345747</a>)</p>
+<p>java 测试消息队列 redis 消息队列 线程池</p>
+</li>
+<li><p>[</p>
+<p>JAVA异步nio Java异步编排</p>
+<p>在实际开发中，有很多异步场景，为了节约时间或者提高系统的吞吐量，要做一些异步任务，在 Java 中要实现异步通常都是利用 Thread，开启一个线程 Thread。开启线程有四种方式，分别为：</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099229/6847966">https://blog.51cto.com/u_16099229/6847966</a>)</p>
+<p>JAVA异步nio Java 线程池 System 阻塞队列</p>
+</li>
+<li><p>[</p>
+<p>java使用队列实现异步 java异步任务队列框架</p>
+<p>ExecutorCompletionService源码从上面的例子可以看到使用ExecutorCompletionService有三个关键步骤：设置一个线程池、submit提交任务、take获取完成的Future。看源码首先看他的属性，查看源码得到他有两个关键属性：Executor executor：执行线程的线程池;BlockingQueue completionQueue：阻塞队列，保存完成的</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16213656/7577310">https://blog.51cto.com/u_16213656/7577310</a>)</p>
+<p>java使用队列实现异步 java异步任务库 阻塞队列 线程池 子类</p>
+</li>
+<li><p>[</p>
+<p>java 创建消息队列 java消息队列异步处理任务</p>
+<p>　　Java编程开发好入门吗？消息队列的用途有哪些？消息队列是指能够提供消息排队消费功能的软件程序，是消息队列中间件的一部分。消息队列中间件是分布式系统中重要的组件。接下来就给大家讲解消息队列的优势、类型以及使用场景。 　　消息队列的用途：　　主要解决应用解耦、异步消息、流量削锋等问题，实现高性能、高可用、可伸缩和最终一致性架构。　　消息队列的常见类型　　1、Kafka：由Apach</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_92655/7544378">https://blog.51cto.com/u_92655/7544378</a>)</p>
+<p>java 创建消息队列 java异步处理 java消息队列 消息队列 Java</p>
+</li>
+<li><p>[</p>
+<p>java 主流 消息队列 java消息队列异步处理任务</p>
+<p>一 简介（1）异步消息：所谓异步消息，跟RMI远程调用、webservice调用是类似的，异步消息也是用于应用程序之间的通信。但是它们之间的区别是：RMI、Hession&#x2F;Burlap、webservice等远程调用机制是同步的。也就是说，当客户端调用远程方法时，客户端必须等到远程方法响应后才能继续执行异步消息，顾名思义消息是异步发送，消息发送者不需要等待消息消费者处理消息，甚至不需要等待消息投递</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099347/7377960">https://blog.51cto.com/u_16099347/7377960</a>)</p>
+<p>java 主流 消息队列 java 测试 json 客户端</p>
+</li>
+<li><p>[</p>
+<p>java 异步多任务队列 java实现异步执行</p>
+<p>一、?前言异步执行对于开发者来说并不陌生，在实际的开发过程中，很多场景多会使用到异步，相比同步执行，异步可以大大缩短请求链路耗时时间，比如：发送短信、邮件、异步更新等，这些都是典型的可以通过异步实现的场景。二、异步的八种实现方式线程ThreadFuture异步框架CompletableFutureSpring注解@AsyncSpring ApplicationEvent事件消息队列第三方异步框架，</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099236/6336763">https://blog.51cto.com/u_16099236/6336763</a>)</p>
+<p>线程池 Async System</p>
+</li>
+<li><p>[</p>
+<p>java springbooot异步任务 springboot异步处理</p>
+<p>Spring Boot 提供了多种方式来实现异步任务，这里介绍三种主要实现方式。Spring Boot 提供了多种方式来实现异步任务，这里介绍三种实现方式。1、基于注解 @Async@Async 注解是 Spring 提供的一种轻量级异步方法实现方式，它可以标记在方法上，用来告诉 Spring 这个方法是一个异步方法，Spring 会将这个方法的执行放在异步线程中进行。使用 @Async 注解需要</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16213656/7197579">https://blog.51cto.com/u_16213656/7197579</a>)</p>
+<p>spring boot spring java 异步任务 Async</p>
+</li>
+<li><p>[</p>
+<p>java的异步通知 java异步处理任务</p>
+<p>通常同步意味着一个任务的某个处理过程会对多个线程在用串行化处理，而异步则意味着某个处理过程可以允许多个线程同时处理。下面我们就来看看有关异步处理的详细内容。异步通常代表着更好的性能，因为它很大程度上依赖于缓冲，是典型的使用空间换时间的做法，例如在计算机当中，高速缓存作为cpu和磁盘io之间的缓冲地带协调cpu高速计算能力和磁盘的低速读写能力。volatile应用场景：检查一个应用执行关闭或中断状态</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099343/6340314">https://blog.51cto.com/u_16099343/6340314</a>)</p>
+<p>java 队列异步处理 服务器 应用场景 主线程</p>
+</li>
+<li><p>[</p>
+<p>java 分布式异步任务框架 java异步任务队列框架</p>
+<p>1. CompletableFutureCompletableFuture 是JDK1.8版本新引入的类。主要作用就是进行任务的异步计算，通过函数式接口的方式帮助我们简化了异步计算的复杂性。适用场景当你的业务处理中需要对部分处理异步计算，且最终汇总计算结果时，CompletableFuture是你不二的选择。JDK1.5中也提供了Future接口，但是获取结果需要一直让CPU轮询，同时配合线程或者</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16213611/7505030">https://blog.51cto.com/u_16213611/7505030</a>)</p>
+<p>java 分布式异步任务框架 java 多线程 线程池 异步任务</p>
+</li>
+<li><p>[</p>
+<p>python bins什么意思 python bind</p>
+<p>入职前有关Pybind的学习，用时接近一天，终于把这块拿下了，心累！！！必须记录下来！ 一、pybind相关基本知识 pybind11是一个轻量级的仅头文件库，是一个只有标题的库，因此不需要链接任何特殊的库，主要用于创建现有C++代码的Python绑定。可将pybind11库视为Boost.Python的一个小型自包含版本，其中剥离了与绑定生成无关的所有内容，依赖于python(2.7或3.5+)</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099281/7737929">https://blog.51cto.com/u_16099281/7737929</a>)</p>
+<p>python bins什么意思 pycharm python visual studio Python</p>
+</li>
+<li><p>[</p>
+<p>python中的向量初始化 python向量机</p>
+<p>　　支持向量机（Support Vector Machine，SVM）的基本模型是定义在特征空间上间隔最大的线性分类器。它是一种二类分类模型，当采用了核技巧之后，支持向量机可以用于非线性分类。　　1）线性可分支持向量机（也称硬间隔支持向量机）：当训练数据线性可分是，通过硬间隔最大化，学得一个线性可分支持向量机　　2）线性支持向量机（也称为软间隔支持向量机）：当训练数据近似线性可分时，通过软间隔最大</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16213679/7738158">https://blog.51cto.com/u_16213679/7738158</a>)</p>
+<p>python中的向量初始化 支持向量机 核函数 决策函数</p>
+</li>
+<li><p>[</p>
+<p>mss系统架构 msb架构</p>
+<p>时隔一个月又回到了博客园写文章，很开心O(∩_∩)O~~今天在做需求的涉及到一个固件版本的概念，其中固件组的人谈到了版本号从MSB到LSB排列，检索查阅后将所得整理如下。 MSB、LSB?MSB(Most Significant Bit)：最高有效位，二进制中代表最高值的比特位，这一位对数值的影响最大。LSB(Least Significant Bit)：最低有效位，二进制中代表最低值的</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099318/7741367">https://blog.51cto.com/u_16099318/7741367</a>)</p>
+<p>mss系统架构 网络 java linux python</p>
+</li>
+<li><p>[</p>
+<p>spark on yarn属于哪种架构 spark on yarn原理</p>
+<p>Spark on YARN工作原理 MapReduce on YARN的工作流程：加载数据，执行map，shuffle，reduce，将结果写入持久化存储。Spark on YARN的工作流程：spark中一个job包含多个stage，而非只有map和reduce，application包含多个job。 Spark工作原理用户通过spark-sumbi</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16213584/7741652">https://blog.51cto.com/u_16213584/7741652</a>)</p>
+<p>spark on yarn属于哪种架构 spark 工作原理 工作流程</p>
+</li>
+<li><p>[</p>
+<p>数学建模神经网络模型建立及求解模板 神经网络 数学模型</p>
+<p>我见过的最脑残也是最好懂的人工神经网络算法教程你要的这份文档，原名为《用平常语言介绍神经网络》(NeuralNetworksinPlainEnglish)，有人翻译过来，做成文档供大家学习。人工神经网络是一种应用类似于大脑神经突触联接的结构进行信息处理的数学模型。在工程与学术界也常直接简称为神经网络或类神经网络。神经网络是一种运算模型，由大量的节点（或称神经元）之间相互联接构成。每个节点代表一种特</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099277/7744187">https://blog.51cto.com/u_16099277/7744187</a>)</p>
+<p>数学建模神经网络模型建立及求解模板 神经网络 机器学习 算法 人工智能</p>
+</li>
+</ul>
+<p>本文转自 <a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099196/7662954">https://blog.51cto.com/u_16099196&#x2F;7662954</a>，如有侵权，请联系删除。</p>
+
+    
+
+    
+
+    
+
+  </div>
+  <div class="article-info article-info-index">
+    
+    
+    
+
+    
+    <p class="article-more-link">
+      <a class="article-more-a" href="/2024/03/07/java/%E6%96%B0%E5%BB%BA%E6%96%87%E4%BB%B6%E5%A4%B9/java%E5%BC%82%E6%AD%A5%E4%BB%BB%E5%8A%A1%E7%BC%96%E6%8E%92-1/">展开全文 >></a>
+    </p>
+    
+
+    
+    <div class="clearfix"></div>
+  </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-java/新建文件夹/java异步任务编排-2" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -891,291 +1176,6 @@
     
     <p class="article-more-link">
       <a class="article-more-a" href="/2024/03/07/test/#abandon/quotation/">展开全文 >></a>
-    </p>
-    
-
-    
-    <div class="clearfix"></div>
-  </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-java/新建文件夹/java异步任务编排-1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-  <div class="article-entry" itemprop="articleBody">
-    
-    <h1 id="java队列异步处理任务-java异步编排"><a href="#java队列异步处理任务-java异步编排" class="headerlink" title="java队列异步处理任务 java异步编排"></a>java队列异步处理任务 java异步编排</h1><p>转载</p>
-<p><a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099196">mob6454cc65e0f6</a> 2023-09-30 11:44:03</p>
-<p><strong><em>文章标签</em> <a target="_blank" rel="noopener" href="https://blog.51cto.com/topic/e2c4ea6c2a2ab05.html">java队列异步处理任务</a> <a target="_blank" rel="noopener" href="https://blog.51cto.com/topic/multithreading.html">多线程</a> <a target="_blank" rel="noopener" href="https://blog.51cto.com/topic/java.html">java</a> <a target="_blank" rel="noopener" href="https://blog.51cto.com/topic/system.html">System</a> <a target="_blank" rel="noopener" href="https://blog.51cto.com/topic/xianchengchi.html">线程池</a></strong> <strong><em>文章分类</em> <a target="_blank" rel="noopener" href="https://blog.51cto.com/nav/java">Java</a> <a target="_blank" rel="noopener" href="https://blog.51cto.com/nav/program">后端开发</a></strong></p>
-<h4 id="异步任务编排CompletableFuture"><a href="#异步任务编排CompletableFuture" class="headerlink" title="异步任务编排CompletableFuture"></a>异步任务编排CompletableFuture</h4><blockquote>
-<p>特别说明：JDK1.8+之后引入 CompletableFuture</p>
-</blockquote>
-<h5 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h5><p>在一些需求中，我们常常要给前端返回一些复杂的视图数据，数据之间可能有关联，比如查询了A数据之后才可以根据A数据中的一些信息来查询B数据。</p>
-<p>再比如 查询A数据与查询B数据一般没有相关性。假设查询A数据需要1秒,查询B数据需要1秒，那么以往的写法中，第一种情况返回给前端的时间总共花费2秒，</p>
-<p>第二种情况返回给前端的时间也会是2秒。但这并不是我们愿意看到的，既然A数据跟B数据没有依赖性很强的情况下，应该可以并行查询进行封装，这样返回给前端的时间只需要花费1秒，这样大大增大了吞吐量，所以可以使用异步编排来解决该问题。</p>
-<h5 id="1-创建异步对象"><a href="#1-创建异步对象" class="headerlink" title="1.创建异步对象"></a>1.创建异步对象</h5><p>提供四个静态方法来创建一个异步操作。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">//创建异步</span><br><span class="line">public static CompletableFuture&lt;Void&gt; runAsync(Runnable runnable);</span><br><span class="line">//创建异步，支持传入线程池</span><br><span class="line">public static CompletableFuture&lt;Void&gt; runAsync(Runnable runnable, Executor executor);</span><br><span class="line">//创建异步,并返回执行后的结果</span><br><span class="line">public static &lt;U&gt; CompletableFuture&lt;U&gt; supplyAsync(Supplier&lt;U&gt; sup);</span><br><span class="line">//创建异步,支持传入线程池,并返回执行后的结果</span><br><span class="line">public static &lt;U&gt; CompletableFuture&lt;U&gt; supplyAsync(Supplier&lt;U&gt; sup, Executor executor)</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>1.runAsync方法都没有返回结果,supplyAsync方法都是有返回结果.</p>
-<p>2.可以支持传入自己的线程池，或不传使用默认。</p>
-</blockquote>
-<p><strong>runAsync示例</strong></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">//创建一个线程池</span><br><span class="line">ExecutorService executorService = Executors.newFixedThreadPool(5);</span><br><span class="line">//第一种方式: runAsync</span><br><span class="line">CompletableFuture.runAsync(() -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;执行runAsync方法....&quot;);</span><br><span class="line">&#125;, executorService);</span><br><span class="line">System.out.println(&quot;执行main方法....&quot;);</span><br><span class="line">//结果:</span><br><span class="line">//执行main方法....</span><br><span class="line">//执行runAsync方法....</span><br></pre></td></tr></table></figure>
-
-<p><strong>supplyAsync示例</strong></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">//创建一个线程池</span><br><span class="line">ExecutorService executorService = Executors.newFixedThreadPool(5); </span><br><span class="line">//第二种方式:supplyAsync</span><br><span class="line">CompletableFuture&lt;String&gt; future = CompletableFuture.supplyAsync(() -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;执行supplyAsync方法...&quot;);</span><br><span class="line">    return &quot;hello,world&quot;;</span><br><span class="line">&#125;, executorService);</span><br><span class="line">System.out.println(&quot;返回的结果是:&quot;+future.get());</span><br><span class="line">System.out.println(&quot;执行main方法....&quot;);</span><br><span class="line">/**</span><br><span class="line">结果:</span><br><span class="line">执行supplyAsync方法...</span><br><span class="line">返回的结果是:hello,world</span><br><span class="line">执行main方法....</span><br><span class="line">*/</span><br></pre></td></tr></table></figure>
-
-<h5 id="2-完成回调和异常感知"><a href="#2-完成回调和异常感知" class="headerlink" title="2.完成回调和异常感知"></a>2.完成回调和异常感知</h5><p>某个异步任务完成之后执行某个任务</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">public CompletableFuture&lt;T&gt; whenComplete(</span><br><span class="line">        BiConsumer&lt;? super T, ? super Throwable&gt; action);</span><br><span class="line">//成功后回调异步执行,arg1:上次执行的结果，arg2:上次执行的异常</span><br><span class="line">public CompletableFuture&lt;T&gt; whenCompleteAsync(</span><br><span class="line">        BiConsumer&lt;? super T, ? super Throwable&gt; action);</span><br><span class="line">//成功后回调异步执行,支持传入自己的线程池。arg1:上次执行的结果，arg2:上次执行的异常 </span><br><span class="line">public CompletableFuture&lt;T&gt; whenCompleteAsync(</span><br><span class="line">        BiConsumer&lt;? super T, ? super Throwable&gt; action, Executor executor);</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>whenComplete与whenCompleteAsync 区别在于 一个是上一个执行完的线程继续执行,一个是交由其他线程来执行。</p>
-</blockquote>
-<p><strong>whenComplete示例</strong></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">//创建一个线程池</span><br><span class="line">ExecutorService executorService = Executors.newFixedThreadPool(5);</span><br><span class="line">//完成回调  成功后执行某个事情</span><br><span class="line">CompletableFuture.supplyAsync(()-&gt;&#123;</span><br><span class="line">    System.out.println(&quot;刷牙....&quot;);</span><br><span class="line">    return &quot;先刷牙&quot;;</span><br><span class="line">&#125;,executorService).whenComplete((res,err)-&gt;&#123;</span><br><span class="line">    System.out.println(&quot;洗脸...&quot;+&quot;上一次结果:&quot;+res+&quot;--错误:&quot;+err);</span><br><span class="line">&#125;);</span><br><span class="line">System.out.println(&quot;执行main方法....&quot;);</span><br><span class="line">/*</span><br><span class="line">刷牙....</span><br><span class="line">洗脸...上一次结果:先刷牙--错误:null</span><br><span class="line">执行main方法....</span><br><span class="line">*/</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">//创建一个线程池</span><br><span class="line">ExecutorService executorService = Executors.newFixedThreadPool(5);</span><br><span class="line">//完成回调  成功后执行某个事情</span><br><span class="line">CompletableFuture.supplyAsync(()-&gt;&#123;</span><br><span class="line">    System.out.println(&quot;刷牙....&quot;);</span><br><span class="line">    int i=1/0;</span><br><span class="line">    return &quot;先刷牙&quot;;</span><br><span class="line">&#125;,executorService).whenComplete((res,err)-&gt;&#123;</span><br><span class="line">    System.out.println(&quot;洗脸...&quot;+&quot;上一次结果:&quot;+res+&quot;--错误:&quot;+err);</span><br><span class="line">&#125;);</span><br><span class="line">System.out.println(&quot;执行main方法....&quot;);</span><br><span class="line">/*</span><br><span class="line">执行main方法....</span><br><span class="line">刷牙....</span><br><span class="line">洗脸...上一次结果:null--错误:java.util.concurrent.CompletionException: java.lang.ArithmeticException: / by zero</span><br><span class="line">*/</span><br></pre></td></tr></table></figure>
-
-<p>虽然能得到异常信息，但是没办法修改返回数据。使用方法exceptionally可以得到解决。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">//创建一个线程池</span><br><span class="line">ExecutorService executorService = Executors.newFixedThreadPool(5);</span><br><span class="line">//完成回调  成功后执行某个事情</span><br><span class="line">CompletableFuture&lt;String&gt; exceptionally = CompletableFuture.supplyAsync(() -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;刷牙....&quot;);</span><br><span class="line">    int i = 1 / 0;</span><br><span class="line">    return &quot;先刷牙&quot;;</span><br><span class="line">&#125;, executorService).whenComplete((res, err) -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;洗脸...&quot; + &quot;上一次结果:&quot; + res + &quot;--错误:&quot; + err);</span><br><span class="line">&#125;).exceptionally(e-&gt;&#123;</span><br><span class="line">    return &quot;异常了&quot;;</span><br><span class="line">&#125;);</span><br><span class="line">System.out.println(&quot;执行结果:&quot;+exceptionally.get());</span><br><span class="line">System.out.println(&quot;执行main方法....&quot;);</span><br><span class="line">/*</span><br><span class="line">刷牙....</span><br><span class="line">洗脸...上一次结果:null--错误:java.util.concurrent.CompletionException: java.lang.ArithmeticException: / by zero</span><br><span class="line">执行结果:异常了</span><br><span class="line">执行main方法....</span><br><span class="line">*/</span><br></pre></td></tr></table></figure>
-
-<h5 id="3-使用handle方法"><a href="#3-使用handle方法" class="headerlink" title="3.使用handle方法"></a>3.使用handle方法</h5><p>以上的whenComplete 以及exceptionally 都可以用handler代替</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">//由上一个执行的线程来继续执行  T:上一次执行的结果  U:返回结果</span><br><span class="line">public &lt;U&gt; CompletableFuture&lt;U&gt; handle(</span><br><span class="line">        BiFunction&lt;? super T, Throwable, ? extends U&gt; fn);</span><br><span class="line">//由其他线程来执行 T:上一次执行的结果  U:返回结果</span><br><span class="line">public &lt;U&gt; CompletableFuture&lt;U&gt; handleAsync(</span><br><span class="line">        BiFunction&lt;? super T, Throwable, ? extends U&gt; fn);</span><br><span class="line">//由其他线程来执行，支持传入线程池。 T:上一次执行的结果  U:返回结果</span><br><span class="line">public &lt;U&gt; CompletableFuture&lt;U&gt; handleAsync(</span><br><span class="line">        BiFunction&lt;? super T, Throwable, ? extends U&gt; fn, Executor executor);</span><br></pre></td></tr></table></figure>
-
-<p><strong>handle示例</strong></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">//创建一个线程池</span><br><span class="line">ExecutorService executorService = Executors.newFixedThreadPool(5);</span><br><span class="line">CompletableFuture&lt;String&gt; handle = CompletableFuture.supplyAsync(() -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;刷牙...&quot;);</span><br><span class="line">    int i = 1 / 0;</span><br><span class="line">    return &quot;正常刷完牙了&quot;;</span><br><span class="line">&#125;).handleAsync((res, err) -&gt; &#123;</span><br><span class="line">    if (res != null) &#123;</span><br><span class="line">        return res;</span><br><span class="line">    &#125;</span><br><span class="line">    if (err != null) &#123;</span><br><span class="line">        return &quot;刷牙的时候有问题&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">    return &quot;返回值是null,但也没抛异常&quot;;</span><br><span class="line">&#125;,executorService);</span><br><span class="line">System.out.println(&quot;执行结果:&quot;+handle.get());</span><br><span class="line">System.out.println(&quot;执行main方法....&quot;);</span><br><span class="line">/*</span><br><span class="line">刷牙...</span><br><span class="line">执行结果:刷牙的时候有问题</span><br><span class="line">执行main方法....</span><br><span class="line">*/</span><br></pre></td></tr></table></figure>
-
-<h5 id="4-线程串行化方法"><a href="#4-线程串行化方法" class="headerlink" title="4.线程串行化方法"></a>4.线程串行化方法</h5><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">//上一个任务执行后，接下来执行的任务  由上一次任务执行后的线程继续执行.</span><br><span class="line">public CompletableFuture&lt;Void&gt; thenRun(Runnable action);</span><br><span class="line">//上一个任务执行后，接下来执行的任务  由不同的线程继续执行.</span><br><span class="line">public CompletableFuture&lt;Void&gt; thenRunAsync(Runnable action);</span><br><span class="line">//上一个任务执行后，接下来执行的任务  由线程池继续执行.</span><br><span class="line">public CompletableFuture&lt;Void&gt; thenRunAsync(Runnable action,Executor executor);</span><br><span class="line"></span><br><span class="line">//上一个任务执行后，接收并接下来执行的任务</span><br><span class="line">public CompletableFuture&lt;Void&gt; thenAccept(Consumer&lt;? super T&gt; action)；</span><br><span class="line">//上一个任务执行后，接收并接下来执行的任务</span><br><span class="line">public CompletableFuture&lt;Void&gt; thenAcceptAsync(Consumer&lt;? super T&gt; action)；</span><br><span class="line">//上一个任务执行后，接收并接下来执行的任务</span><br><span class="line">public CompletableFuture&lt;Void&gt; thenAcceptAsync(Consumer&lt;? super T&gt; action,Executor executor)；</span><br><span class="line"></span><br><span class="line">//上一个任务执行后，接收并接下来执行的任务,并返回结果</span><br><span class="line">public &lt;U&gt; CompletableFuture&lt;U&gt; thenApply(Function&lt;? super T,? extends U&gt; fn);</span><br><span class="line">//上一个任务执行后，接收并接下来执行的任务,并返回结果</span><br><span class="line">public &lt;U&gt; CompletableFuture&lt;U&gt; thenApplyAsync( Function&lt;? super T,? extends U&gt; fn) ;</span><br><span class="line">//上一个任务执行后，接收并接下来执行的任务,并返回结果</span><br><span class="line">public &lt;U&gt; CompletableFuture&lt;U&gt; thenApplyAsync(Function&lt;? super T,? extends U&gt; fn, Executor executor);</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>thenRun都是无返回值的，不需要上一次任务执行的结果。</p>
-<p>thenAccept 都是可以接收到上一次任务执行的结果，用于下一次执行使用。</p>
-<p>thenApply 接收上一次执行的结果，并有返回值。</p>
-</blockquote>
-<p><strong>thenRun示例</strong></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">//创建一个线程池</span><br><span class="line">ExecutorService executorService = Executors.newFixedThreadPool(5);</span><br><span class="line">CompletableFuture&lt;Void&gt; future = CompletableFuture.supplyAsync(() -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;刷牙...&quot;);</span><br><span class="line">    return null;</span><br><span class="line">&#125;, executorService).thenRun(() -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;洗脸&quot;);</span><br><span class="line">&#125;);</span><br><span class="line">//阻塞等待方法</span><br><span class="line">future.get();</span><br><span class="line">/*</span><br><span class="line">刷牙...</span><br><span class="line">洗脸</span><br><span class="line">*/</span><br></pre></td></tr></table></figure>
-
-<p><strong>thenAccept示例</strong></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">//创建一个线程池</span><br><span class="line">ExecutorService executorService = Executors.newFixedThreadPool(5);</span><br><span class="line">CompletableFuture&lt;Void&gt; future = CompletableFuture.supplyAsync(() -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;刷牙...&quot;);</span><br><span class="line">    return &quot;我刷完了&quot;;</span><br><span class="line">&#125;, executorService).thenAcceptAsync(result -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;接收结果:&quot;+result);</span><br><span class="line">    System.out.println(&quot;洗脸&quot;);</span><br><span class="line">&#125;);</span><br><span class="line">//阻塞等待方法</span><br><span class="line">future.get();</span><br><span class="line">/*</span><br><span class="line">刷牙...</span><br><span class="line">接收结果:我刷完了</span><br><span class="line">洗脸</span><br><span class="line">*/</span><br></pre></td></tr></table></figure>
-
-<p><strong>thenApply示例</strong></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">//创建一个线程池</span><br><span class="line">ExecutorService executorService = Executors.newFixedThreadPool(5);</span><br><span class="line">CompletableFuture&lt;String&gt; future = CompletableFuture.supplyAsync(() -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;刷牙...&quot;);</span><br><span class="line">    return &quot;我刷完了&quot;;</span><br><span class="line">&#125;, executorService).thenApplyAsync(result -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;接受结果:&quot;+result);</span><br><span class="line">    System.out.println(&quot;洗脸&quot;);</span><br><span class="line">    return &quot;我洗完了&quot;;</span><br><span class="line">&#125;);</span><br><span class="line">//阻塞等待方法</span><br><span class="line">String s = future.get();</span><br><span class="line">System.out.println(&quot;最终结果:&quot;+s);</span><br><span class="line">/*</span><br><span class="line">刷牙...</span><br><span class="line">接受结果:我刷完了</span><br><span class="line">洗脸</span><br><span class="line">最终结果:我洗完了</span><br><span class="line">*/</span><br></pre></td></tr></table></figure>
-
-<h5 id="5-两任务组合-都要完成"><a href="#5-两任务组合-都要完成" class="headerlink" title="5.两任务组合-都要完成"></a>5.两任务组合-都要完成</h5><p>当两个任务都执行完毕之后，再执行当前任务。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">//两个任务都完成,没有接收他们的结果，没有返回值</span><br><span class="line">public CompletableFuture&lt;Void&gt; runAfterBoth(CompletionStage&lt;?&gt; other,Runnable action) </span><br><span class="line">public CompletableFuture&lt;Void&gt; runAfterBothAsync(CompletionStage&lt;?&gt; other, Runnable action)</span><br><span class="line">public CompletableFuture&lt;Void&gt; runAfterBothAsync(CompletionStage&lt;?&gt; other,Runnable action, Executor executor);</span><br><span class="line">//两个任务都完成 ,接收他们的结果并执行新任务，没有返回值</span><br><span class="line">public &lt;U&gt; CompletableFuture&lt;Void&gt; thenAcceptBoth(CompletionStage&lt;? extends U&gt; other,BiConsumer&lt;? super T, ? super U&gt; action)</span><br><span class="line">public &lt;U&gt; CompletableFuture&lt;Void&gt; thenAcceptBothAsync(CompletionStage&lt;? extends U&gt; other,BiConsumer&lt;? super T, ? super U&gt; action);</span><br><span class="line">public &lt;U&gt; CompletableFuture&lt;Void&gt; thenAcceptBothAsync(CompletionStage&lt;? extends U&gt; other,BiConsumer&lt;? super T, ? super U&gt; action, Executor executor);</span><br><span class="line">//两个任务都完成 接收他们的结果并执行新任务 并返回当前任务的返回值。</span><br><span class="line">public &lt;U,V&gt; CompletableFuture&lt;V&gt; thenCombine(CompletionStage&lt;? extends U&gt; other,BiFunction&lt;? super T,? super U,? extends V&gt; fn) </span><br><span class="line">public &lt;U,V&gt; CompletableFuture&lt;V&gt; thenCombineAsync(CompletionStage&lt;? extends U&gt; other,BiFunction&lt;? super T,? super U,? extends V&gt; fn);</span><br><span class="line">public &lt;U,V&gt; CompletableFuture&lt;V&gt; thenCombineAsync(CompletionStage&lt;? extends U&gt; other,BiFunction&lt;? super T,? super U,? extends V&gt; fn, Executor executor);</span><br></pre></td></tr></table></figure>
-
-<p><strong>runAfterBoth示例</strong></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">//创建一个线程池</span><br><span class="line">ExecutorService executorService = Executors.newFixedThreadPool(5);</span><br><span class="line">CompletableFuture&lt;String&gt; future1 = CompletableFuture.supplyAsync(() -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;刷牙...&quot;);</span><br><span class="line">    return &quot;我刷完了&quot;;</span><br><span class="line">&#125;, executorService);</span><br><span class="line"></span><br><span class="line">CompletableFuture&lt;String&gt; future2 = CompletableFuture.supplyAsync(() -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;洗脸...&quot;);</span><br><span class="line">    return &quot;我洗完了&quot;;</span><br><span class="line">&#125;, executorService);</span><br><span class="line">future1.runAfterBothAsync(future2, () -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;吃饭&quot;);</span><br><span class="line">&#125;, executorService);</span><br><span class="line">/*</span><br><span class="line">刷牙...</span><br><span class="line">洗脸...</span><br><span class="line">吃饭</span><br><span class="line">*/</span><br></pre></td></tr></table></figure>
-
-<p><strong>thenAcceptBoth示例</strong></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">//创建一个线程池</span><br><span class="line">ExecutorService executorService = Executors.newFixedThreadPool(5);</span><br><span class="line">CompletableFuture&lt;String&gt; future1 = CompletableFuture.supplyAsync(() -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;刷牙...&quot;);</span><br><span class="line">    return &quot;我刷完了&quot;;</span><br><span class="line">&#125;, executorService);</span><br><span class="line"></span><br><span class="line">CompletableFuture&lt;String&gt; future2 = CompletableFuture.supplyAsync(() -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;洗脸...&quot;);</span><br><span class="line">    return &quot;我洗完了&quot;;</span><br><span class="line">&#125;, executorService);</span><br><span class="line">future1.thenAcceptBothAsync(future2, (f1,f2) -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;接受f1结果:&quot;+f1);</span><br><span class="line">    System.out.println(&quot;接受f2结果:&quot;+f2);</span><br><span class="line">    System.out.println(&quot;吃饭&quot;);</span><br><span class="line">&#125;, executorService);</span><br><span class="line">/*</span><br><span class="line">刷牙...</span><br><span class="line">洗脸...</span><br><span class="line">接受f1结果:我刷完了</span><br><span class="line">接受f2结果:我洗完了</span><br><span class="line">吃饭</span><br><span class="line">*/</span><br></pre></td></tr></table></figure>
-
-<p><strong>thenCombine示例</strong></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">//创建一个线程池</span><br><span class="line">ExecutorService executorService = Executors.newFixedThreadPool(5);</span><br><span class="line">CompletableFuture&lt;String&gt; future1 = CompletableFuture.supplyAsync(() -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;刷牙...&quot;);</span><br><span class="line">    return &quot;我刷完了&quot;;</span><br><span class="line">&#125;, executorService);</span><br><span class="line"></span><br><span class="line">CompletableFuture&lt;String&gt; future2 = CompletableFuture.supplyAsync(() -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;洗脸...&quot;);</span><br><span class="line">    return &quot;我洗完了&quot;;</span><br><span class="line">&#125;, executorService);</span><br><span class="line">CompletableFuture&lt;String&gt; future3 = future1.thenCombineAsync(future2, (f1, f2) -&gt; &#123;</span><br><span class="line">    System.out.println(&quot;接受f1结果:&quot; + f1);</span><br><span class="line">    System.out.println(&quot;接受f2结果:&quot; + f2);</span><br><span class="line">    System.out.println(&quot;吃饭&quot;);</span><br><span class="line">    return &quot;吃完了&quot;;</span><br><span class="line">&#125;, executorService);</span><br><span class="line">String s = future3.get();</span><br><span class="line">System.out.println(&quot;最终结果:&quot;+s);</span><br><span class="line">/*</span><br><span class="line">刷牙...</span><br><span class="line">洗脸...</span><br><span class="line">接受f1结果:我刷完了</span><br><span class="line">接受f2结果:我洗完了</span><br><span class="line">吃饭</span><br><span class="line">最终结果:吃完了</span><br><span class="line">*/</span><br></pre></td></tr></table></figure>
-
-<h5 id="6-两任务组合-一个完成"><a href="#6-两任务组合-一个完成" class="headerlink" title="6.两任务组合-一个完成"></a>6.两任务组合-一个完成</h5><p>只要两个任务完成一个，就会触发第三个任务的执行。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">//接收某个任务执行完成的结果，有返回值.</span><br><span class="line">public &lt;U&gt; CompletableFuture&lt;U&gt; applyToEither(CompletionStage&lt;? extends T&gt; other, Function&lt;? super T, U&gt; fn) </span><br><span class="line">public &lt;U&gt; CompletableFuture&lt;U&gt; applyToEitherAsync(CompletionStage&lt;? extends T&gt; other, Function&lt;? super T, U&gt; fn)</span><br><span class="line">public &lt;U&gt; CompletableFuture&lt;U&gt; applyToEitherAsync(CompletionStage&lt;? extends T&gt; other, Function&lt;? super T, U&gt; fn</span><br><span class="line">                                                   ,Executor executor);</span><br><span class="line">//接收某个任务执行完成的结果，无返回值.</span><br><span class="line">public CompletableFuture&lt;Void&gt; acceptEither(CompletionStage&lt;? extends T&gt; other, Consumer&lt;? super T&gt; action) ;</span><br><span class="line">public CompletableFuture&lt;Void&gt; acceptEitherAsync(CompletionStage&lt;? extends T&gt; other, Consumer&lt;? super T&gt; action);</span><br><span class="line">public CompletableFuture&lt;Void&gt; acceptEitherAsync(CompletionStage&lt;? extends T&gt; other, Consumer&lt;? super T&gt; action,Executor executor);</span><br><span class="line">//不接收某个任务执行完成的结果，也无返回值.</span><br><span class="line">public CompletableFuture&lt;Void&gt; runAfterEither(CompletionStage&lt;?&gt; other, Runnable action);</span><br><span class="line">public CompletableFuture&lt;Void&gt; runAfterEitherAsync(CompletionStage&lt;?&gt; other,Runnable action) ;</span><br><span class="line">public CompletableFuture&lt;Void&gt; runAfterEitherAsync(CompletionStage&lt;?&gt; other,Runnable action,Executor executor);</span><br></pre></td></tr></table></figure>
-
-<p>本文章为转载内容，我们尊重原作者对文章享有的著作权。如有内容错误或侵权问题，欢迎原作者联系我们进行内容更正或删除文章。</p>
-<ul>
-<li><strong><a href="javascript:;"></a>赞</strong></li>
-<li><strong><a href="javascript:;"></a>收藏</strong></li>
-<li><strong><a href="javascript:;"></a>评论</strong></li>
-<li><strong><a href="javascript:;"></a>分享</strong></li>
-<li><strong><a href="javascript:;"></a>举报</strong></li>
-</ul>
-<p>上一篇：<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099196/7662206">android 如何在native绘制文本 安卓view绘制机制</a></p>
-<p>下一篇：<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099196/7663740">hadoop云计算平台 基于hadoop的云计算课程设计</a></p>
-<p><a target="_blank" rel="noopener" href="https://blog.51cto.com/"><img src="https://ucenter.51cto.com/images/noavatar_middle.gif"></a></p>
-<p>提问和评论都可以，用心的回复会被更多人看到 <strong>评论</strong></p>
-<p><strong>发布评论</strong></p>
-<p><strong>全部评论</strong> () 最热 最新</p>
-<p><strong>相关文章</strong></p>
-<ul>
-<li><p>[</p>
-<p>CompletableFuture异步任务编排</p>
-<p>CompletableFuture异步任务编排</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_15890333/5885136">https://blog.51cto.com/u_15890333/5885136</a>)</p>
-<p>java 异步 Thread 返回结果 线程池</p>
-</li>
-<li><p>[</p>
-<p>java异步编排</p>
-<p># Java异步编排实现指南## 引言在Java开发中，我们经常会遇到需要执行多个耗时操作的场景，例如网络请求、数据库查询等。为了提高程序的性能和效率，我们可以使用异步编排的方式来处理这些耗时操作，使它们并行执行，从而节省总体执行时间。本文将介绍如何在Java中实现异步编排，并帮助新手开发者快速掌握这一技术。## 异步编排的流程下面是Java异步编排的一般流程，可以用表格展示：|</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16213344/7197245">https://blog.51cto.com/u_16213344/7197245</a>)</p>
-<p>异步任务 线程池 java</p>
-</li>
-<li><p>[</p>
-<p>java 异步多任务队列</p>
-<p>## Java 异步多任务队列### 引言在日常的编程中，我们经常会遇到需要同时处理多个任务的场景。传统的做法是使用多线程来实现并发处理，但多线程在面对大规模并发任务时会面临一些问题，如线程生命周期管理、上下文切换开销等。为了优化这些问题，Java提供了异步多任务队列的解决方案，使得任务可以在后台异步处理，提高并发性能和系统响应速度。### 什么是异步多任务队列异步多任务队列是一种</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16213445/6985908">https://blog.51cto.com/u_16213445/6985908</a>)</p>
-<p>线程池 任务队列 Java</p>
-</li>
-<li><p>[</p>
-<p>java队列异步处理任务 java异步编排</p>
-<p>异步任务编排CompletableFuture特别说明：JDK1.8+之后引入 CompletableFuture背景在一些需求中，我们常常要给前端返回一些复杂的视图数据，数据之间可能有关联，比如查询了A数据之后才可以根据A数据中的一些信息来查询B数据。再比如 查询A数据与查询B数据一般没有相关性。假设查询A数据需要1秒,查询B数据需要1秒，那么以往的写法中，第一种情况返回给前端的时间总共花费2秒</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099196/7662954">https://blog.51cto.com/u_16099196/7662954</a>)</p>
-<p>java队列异步处理任务 多线程 java System 线程池</p>
-</li>
-<li><p>[</p>
-<p>java异步任务队列框架 java异步编排</p>
-<p>一、CompletableFuture 异步编排1、业务场景 查询商品详情页的逻辑比较复杂，有些数据还需要远程调用，必然需要花费更多的时间。 假如商品详情页的每个查询，需要如下标注的时间才能完成 那么，用户需要 5.5s 后才能看到商品详情页的内容。很显然是不能接受的。 如果有多个线程同时完成这 6 步操作，也许只需要 1.5s 即可完成响应。2、java8 - CompletableFuture</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16213683/7545084">https://blog.51cto.com/u_16213683/7545084</a>)</p>
-<p>java异步任务队列框架 java 开发语言 后端 返回结果</p>
-</li>
-<li><p>[</p>
-<p>Java异步任务队列 java异步任务如何处理</p>
-<p>场景： 实际项目中，程序操作出了问题，后续要怎么处理是个很重要的问题，如果这个问题是同步操作引起的解决起来比较简单，比如用户注册，如果系统注册失败，后台可以马上返回错误信息，用户也可以马上看到错误点是什么。但是如果是异步操作，比如用户注册成功后，系统异步发送短信给用户，发短信的操作出问题了没有发出去，而且这个操作也不是用户主动操作了，所以可能会出现用户不知道你有这个操作，系统也没办法知道自己操作出</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_14120/6586434">https://blog.51cto.com/u_14120/6586434</a>)</p>
-<p>Java异步任务队列 消息队列 用户注册 异步操作</p>
-</li>
-<li><p>[</p>
-<p>java 如何处理异步队列 java异步任务队列</p>
-<p>什么是消息队列?消息队列，是一个以队列数据结构为基础的一个实体，这个实体是真实存在的。比如程序中的数组，数据库中的表或者redis等等。为什么要使用队列？什么情况下才会使用队列？实时性要求不高，比较耗时间的任务，是队列的最佳应用场景。比如说在某网站注册一个账号，当信息入库注册成功之后，该网站将会发送一封激活邮件，从而激活账号。而发送邮件的操作并不是需要实时响应的。不需要卡在注册界面，等待邮件发送成</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16213654/7317722">https://blog.51cto.com/u_16213654/7317722</a>)</p>
-<p>java 如何处理异步队列 缓存 数据库 消息队列</p>
-</li>
-<li><p>[</p>
-<p>java 异步socket 队列 java异步任务队列</p>
-<p>程序员的成长之路CompletableFuture是jdk8的新特性。CompletableFuture实现了CompletionStage接口和Future接口，前者是对后者的一个扩展，增加了异步会点、流式处理、多个Future组合处理的能力，使Java在处理多任务的协同工作时更加顺畅便利。一、创建异步任务1. supplyAsyncsupplyAsync是创建带有返回值的异步任务。它有如下两个</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099297/6793526">https://blog.51cto.com/u_16099297/6793526</a>)</p>
-<p>java 异步socket 队列 java servlet jvm 开发语言</p>
-</li>
-<li><p>[</p>
-<p>java 异步编排执行框架 java异步处理框架</p>
-<p>前两天看Spring框架参考手册，发现SpringMVC在4.0版本上支持异步请求处理。废话不多说，开始异步请求之旅。什么是异步请求处理？如果我们使用tomcat服务器来开发传统的servlet，那么用户的请求会经过以下流程进入到我们的servelt。客户端发送http请求到tomcat监听的端口。tomcat connector会接收该请求到线程中，并根据http协议解析该请求。解析完报文后，会</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16213626/7490659">https://blog.51cto.com/u_16213626/7490659</a>)</p>
-<p>java 异步编排执行框架 java http 异步请求框架 tomcat 异步请求 xml</p>
-</li>
-<li><p>[</p>
-<p>rxjava实现异步队列 java异步任务队列</p>
-<p>文章目录前言一、异步队列实现思路？二、实现步骤1.加入监听器2.实现监听器3.实现转交处理对象和转交处理线程4.自动转交异步处理5.业务如何添加 前言在某些场景下，操作比较耗时，给用户体验不是很好，这时候我们就会直接想到两种方案，一种是定时任务，一种就是异步队列，那些实时性要求不高，且比较耗时的任务，是队列的最佳应用场景。一、异步队列实现思路？持久化&#x3D;&gt;插入队列&#x3D;&gt;出队，当程序突然停</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_12831/6309203">https://blog.51cto.com/u_12831/6309203</a>)</p>
-<p>java 开发语言 异步处理 线程池 监听器</p>
-</li>
-<li><p>[</p>
-<p>java 测试消息队列 java消息队列异步处理任务</p>
-<p>说说这两种的区别，各自适合什么场景？用线程池ExecutorService异步处理：我理解ExecutorService其实也是内部使用了队列（如LinkedBlockingQueue），所以从设计上，其实和使用中间价的消息队列是差不多一致的。只是这里应用服务器既充当生产者又充当消费者，也是消息队列中间价的实现者。这种应该适合非分布式的架构，比如简单的只有一台服务器。使用消息队列：消息队列（指ac</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099311/7345747">https://blog.51cto.com/u_16099311/7345747</a>)</p>
-<p>java 测试消息队列 redis 消息队列 线程池</p>
-</li>
-<li><p>[</p>
-<p>JAVA异步nio Java异步编排</p>
-<p>在实际开发中，有很多异步场景，为了节约时间或者提高系统的吞吐量，要做一些异步任务，在 Java 中要实现异步通常都是利用 Thread，开启一个线程 Thread。开启线程有四种方式，分别为：</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099229/6847966">https://blog.51cto.com/u_16099229/6847966</a>)</p>
-<p>JAVA异步nio Java 线程池 System 阻塞队列</p>
-</li>
-<li><p>[</p>
-<p>java使用队列实现异步 java异步任务队列框架</p>
-<p>ExecutorCompletionService源码从上面的例子可以看到使用ExecutorCompletionService有三个关键步骤：设置一个线程池、submit提交任务、take获取完成的Future。看源码首先看他的属性，查看源码得到他有两个关键属性：Executor executor：执行线程的线程池;BlockingQueue completionQueue：阻塞队列，保存完成的</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16213656/7577310">https://blog.51cto.com/u_16213656/7577310</a>)</p>
-<p>java使用队列实现异步 java异步任务库 阻塞队列 线程池 子类</p>
-</li>
-<li><p>[</p>
-<p>java 创建消息队列 java消息队列异步处理任务</p>
-<p>　　Java编程开发好入门吗？消息队列的用途有哪些？消息队列是指能够提供消息排队消费功能的软件程序，是消息队列中间件的一部分。消息队列中间件是分布式系统中重要的组件。接下来就给大家讲解消息队列的优势、类型以及使用场景。 　　消息队列的用途：　　主要解决应用解耦、异步消息、流量削锋等问题，实现高性能、高可用、可伸缩和最终一致性架构。　　消息队列的常见类型　　1、Kafka：由Apach</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_92655/7544378">https://blog.51cto.com/u_92655/7544378</a>)</p>
-<p>java 创建消息队列 java异步处理 java消息队列 消息队列 Java</p>
-</li>
-<li><p>[</p>
-<p>java 主流 消息队列 java消息队列异步处理任务</p>
-<p>一 简介（1）异步消息：所谓异步消息，跟RMI远程调用、webservice调用是类似的，异步消息也是用于应用程序之间的通信。但是它们之间的区别是：RMI、Hession&#x2F;Burlap、webservice等远程调用机制是同步的。也就是说，当客户端调用远程方法时，客户端必须等到远程方法响应后才能继续执行异步消息，顾名思义消息是异步发送，消息发送者不需要等待消息消费者处理消息，甚至不需要等待消息投递</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099347/7377960">https://blog.51cto.com/u_16099347/7377960</a>)</p>
-<p>java 主流 消息队列 java 测试 json 客户端</p>
-</li>
-<li><p>[</p>
-<p>java 异步多任务队列 java实现异步执行</p>
-<p>一、?前言异步执行对于开发者来说并不陌生，在实际的开发过程中，很多场景多会使用到异步，相比同步执行，异步可以大大缩短请求链路耗时时间，比如：发送短信、邮件、异步更新等，这些都是典型的可以通过异步实现的场景。二、异步的八种实现方式线程ThreadFuture异步框架CompletableFutureSpring注解@AsyncSpring ApplicationEvent事件消息队列第三方异步框架，</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099236/6336763">https://blog.51cto.com/u_16099236/6336763</a>)</p>
-<p>线程池 Async System</p>
-</li>
-<li><p>[</p>
-<p>java springbooot异步任务 springboot异步处理</p>
-<p>Spring Boot 提供了多种方式来实现异步任务，这里介绍三种主要实现方式。Spring Boot 提供了多种方式来实现异步任务，这里介绍三种实现方式。1、基于注解 @Async@Async 注解是 Spring 提供的一种轻量级异步方法实现方式，它可以标记在方法上，用来告诉 Spring 这个方法是一个异步方法，Spring 会将这个方法的执行放在异步线程中进行。使用 @Async 注解需要</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16213656/7197579">https://blog.51cto.com/u_16213656/7197579</a>)</p>
-<p>spring boot spring java 异步任务 Async</p>
-</li>
-<li><p>[</p>
-<p>java的异步通知 java异步处理任务</p>
-<p>通常同步意味着一个任务的某个处理过程会对多个线程在用串行化处理，而异步则意味着某个处理过程可以允许多个线程同时处理。下面我们就来看看有关异步处理的详细内容。异步通常代表着更好的性能，因为它很大程度上依赖于缓冲，是典型的使用空间换时间的做法，例如在计算机当中，高速缓存作为cpu和磁盘io之间的缓冲地带协调cpu高速计算能力和磁盘的低速读写能力。volatile应用场景：检查一个应用执行关闭或中断状态</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099343/6340314">https://blog.51cto.com/u_16099343/6340314</a>)</p>
-<p>java 队列异步处理 服务器 应用场景 主线程</p>
-</li>
-<li><p>[</p>
-<p>java 分布式异步任务框架 java异步任务队列框架</p>
-<p>1. CompletableFutureCompletableFuture 是JDK1.8版本新引入的类。主要作用就是进行任务的异步计算，通过函数式接口的方式帮助我们简化了异步计算的复杂性。适用场景当你的业务处理中需要对部分处理异步计算，且最终汇总计算结果时，CompletableFuture是你不二的选择。JDK1.5中也提供了Future接口，但是获取结果需要一直让CPU轮询，同时配合线程或者</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16213611/7505030">https://blog.51cto.com/u_16213611/7505030</a>)</p>
-<p>java 分布式异步任务框架 java 多线程 线程池 异步任务</p>
-</li>
-<li><p>[</p>
-<p>python bins什么意思 python bind</p>
-<p>入职前有关Pybind的学习，用时接近一天，终于把这块拿下了，心累！！！必须记录下来！ 一、pybind相关基本知识 pybind11是一个轻量级的仅头文件库，是一个只有标题的库，因此不需要链接任何特殊的库，主要用于创建现有C++代码的Python绑定。可将pybind11库视为Boost.Python的一个小型自包含版本，其中剥离了与绑定生成无关的所有内容，依赖于python(2.7或3.5+)</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099281/7737929">https://blog.51cto.com/u_16099281/7737929</a>)</p>
-<p>python bins什么意思 pycharm python visual studio Python</p>
-</li>
-<li><p>[</p>
-<p>python中的向量初始化 python向量机</p>
-<p>　　支持向量机（Support Vector Machine，SVM）的基本模型是定义在特征空间上间隔最大的线性分类器。它是一种二类分类模型，当采用了核技巧之后，支持向量机可以用于非线性分类。　　1）线性可分支持向量机（也称硬间隔支持向量机）：当训练数据线性可分是，通过硬间隔最大化，学得一个线性可分支持向量机　　2）线性支持向量机（也称为软间隔支持向量机）：当训练数据近似线性可分时，通过软间隔最大</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16213679/7738158">https://blog.51cto.com/u_16213679/7738158</a>)</p>
-<p>python中的向量初始化 支持向量机 核函数 决策函数</p>
-</li>
-<li><p>[</p>
-<p>mss系统架构 msb架构</p>
-<p>时隔一个月又回到了博客园写文章，很开心O(∩_∩)O~~今天在做需求的涉及到一个固件版本的概念，其中固件组的人谈到了版本号从MSB到LSB排列，检索查阅后将所得整理如下。 MSB、LSB?MSB(Most Significant Bit)：最高有效位，二进制中代表最高值的比特位，这一位对数值的影响最大。LSB(Least Significant Bit)：最低有效位，二进制中代表最低值的</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099318/7741367">https://blog.51cto.com/u_16099318/7741367</a>)</p>
-<p>mss系统架构 网络 java linux python</p>
-</li>
-<li><p>[</p>
-<p>spark on yarn属于哪种架构 spark on yarn原理</p>
-<p>Spark on YARN工作原理 MapReduce on YARN的工作流程：加载数据，执行map，shuffle，reduce，将结果写入持久化存储。Spark on YARN的工作流程：spark中一个job包含多个stage，而非只有map和reduce，application包含多个job。 Spark工作原理用户通过spark-sumbi</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16213584/7741652">https://blog.51cto.com/u_16213584/7741652</a>)</p>
-<p>spark on yarn属于哪种架构 spark 工作原理 工作流程</p>
-</li>
-<li><p>[</p>
-<p>数学建模神经网络模型建立及求解模板 神经网络 数学模型</p>
-<p>我见过的最脑残也是最好懂的人工神经网络算法教程你要的这份文档，原名为《用平常语言介绍神经网络》(NeuralNetworksinPlainEnglish)，有人翻译过来，做成文档供大家学习。人工神经网络是一种应用类似于大脑神经突触联接的结构进行信息处理的数学模型。在工程与学术界也常直接简称为神经网络或类神经网络。神经网络是一种运算模型，由大量的节点（或称神经元）之间相互联接构成。每个节点代表一种特</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099277/7744187">https://blog.51cto.com/u_16099277/7744187</a>)</p>
-<p>数学建模神经网络模型建立及求解模板 神经网络 机器学习 算法 人工智能</p>
-</li>
-</ul>
-<p>本文转自 <a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099196/7662954">https://blog.51cto.com/u_16099196&#x2F;7662954</a>，如有侵权，请联系删除。</p>
-
-    
-
-    
-
-    
-
-  </div>
-  <div class="article-info article-info-index">
-    
-    
-    
-
-    
-    <p class="article-more-link">
-      <a class="article-more-a" href="/2024/03/07/java/%E6%96%B0%E5%BB%BA%E6%96%87%E4%BB%B6%E5%A4%B9/java%E5%BC%82%E6%AD%A5%E4%BB%BB%E5%8A%A1%E7%BC%96%E6%8E%92-1/">展开全文 >></a>
     </p>
     
 
@@ -1847,7 +1847,7 @@
   <div class="outer">
     <div id="footer-info">
     	<div class="footer-left">
-    		&copy; 2022-2024 <a href="https://jimoying.github.io/" target="_blank">季末影</a>
+    		&copy; 2022-2024 <a href="https://jimoying.github.io11111/" target="_blank">季末影</a>
     	</div>
       	<div class="footer-right">
 			
@@ -1970,6 +1970,14 @@
               </li>
              
               <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">hexo</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color2">Typora</a>
+              </li>
+             
+              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color2">Ubuntu</a>
               </li>
              
@@ -1986,19 +1994,11 @@
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color2">Typora</a>
+                <a href="javascript:void(0)" class="js-tag color2">kernel</a>
               </li>
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color4">elf</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">hexo</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color2">kernel</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -2010,11 +2010,11 @@
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">blog</a>
+                <a href="javascript:void(0)" class="js-tag color5">java</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">java</a>
+                <a href="javascript:void(0)" class="js-tag color5">blog</a>
               </li>
             
             <div class="clearfix"></div>
@@ -2221,6 +2221,56 @@
   
   <!-- <script async type="text/javascript" size="90" alpha="0.2" zIndex="0" src="/plugins/ribbon.js/ribbon.min.js"></script> -->
   
+  
+    <script type="text/javascript" src="/plugins/live2d-widget.js/L2Dwidget.min.js"></script>
+<script type="text/javascript">
+  /**
+   * 完整配置请参考：https://l2dwidget.js.org/docs/class/src/index.js~L2Dwidget.html#instance-method-init
+   */
+  var pluginModelPath = "assets/", // 模型的文件路径，无需更改
+    pluginRootPath = "/live2d_models/"; // 插件的路径，无需更改
+  //特定的模型json文件名称
+  var modelPathJson = {
+    "epsilon2_1": "Epsilon2.1",
+    "gf": "Gantzert_Felixander",
+    "haru/01": "haru01",
+    "haru/02": "haru02",
+    "nietzsche": "nietzche"
+  }
+
+  
+    var modelName = "hibiki";
+  
+
+  var modelJsonPath = "";
+  if (modelPathJson[modelName]) {
+    modelJsonPath = pluginRootPath + modelName + "/" + pluginModelPath + modelPathJson[modelName] +
+      ".model.json";
+  } else {
+    modelJsonPath = pluginRootPath + modelName + "/" + pluginModelPath + modelName + ".model.json";
+  }
+  L2Dwidget.init({
+    model: {
+      jsonPath: modelJsonPath
+    },
+    display: {
+       position: "right", 
+       width: 145, 
+       height: 315, 
+       hOffset: 50, 
+      
+    },
+    mobile: {
+      
+       scale: 0.6 
+    },
+    react: {
+       opacity: 0.8 
+    }
+  })
+
+</script>
+
   
   
   <script type="text/javascript" src="/lib/snow.js"></script>

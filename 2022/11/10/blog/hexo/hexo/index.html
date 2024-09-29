@@ -5,7 +5,7 @@
   
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
-  <link rel="dns-prefetch" href="https://jimoying.github.io">
+  <link rel="dns-prefetch" href="https://jimoying.github.io11111">
   <title>hexo搭建 | 季末影</title>
   <meta name="generator" content="hexo-theme-yilia-plus">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -13,7 +13,7 @@
   <meta name="description" content="hexo搭建使用与主题">
 <meta property="og:type" content="article">
 <meta property="og:title" content="hexo搭建">
-<meta property="og:url" content="https://jimoying.github.io/2022/11/10/blog/hexo/hexo/index.html">
+<meta property="og:url" content="https://jimoying.github.io11111/2022/11/10/blog/hexo/hexo/index.html">
 <meta property="og:site_name" content="季末影">
 <meta property="og:description" content="hexo搭建使用与主题">
 <meta property="og:locale" content="zh_CN">
@@ -299,10 +299,10 @@
 <p>&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D; Hexo的使用<br>Hexo系列——(二) 使用Hexo发博客<br><a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_43659725/article/details/125207534">https://blog.csdn.net/weixin_43659725/article/details/125207534</a></p>
 <p>Hexo系列——(三) 将Hexo部署到Git上<br>1.配置用户名和邮箱<br>打开终端，输入指令，替换自己的github用户名和邮箱：<br>git config –global user.name “用户名”<br>git config –global user.email “邮箱”</p>
 <p>2.生成密钥SSH key：<br>ssh-keygen -t rsa -C “邮箱”<br>生成的公钥会保存在~&#x2F;.ssh&#x2F;id_ras.pub中，使用cat ~&#x2F;.ssh&#x2F;id_ras.pub查看，我们全部复制，等会要用。</p>
-<p>3.添加公钥到Github的账号<br>4.验证ssh的配置是否成功。<br>输入 ssh -T <a href="mailto:&#103;&#x69;&#116;&#x40;&#x67;&#x69;&#x74;&#x68;&#x75;&#x62;&#46;&#x63;&#111;&#109;">&#103;&#x69;&#116;&#x40;&#x67;&#x69;&#x74;&#x68;&#x75;&#x62;&#46;&#x63;&#111;&#109;</a>，验证密码，出现你的github用户名代表配置成功。You’ve successfully authenticated, but GitHub does not provide shell access.</p>
+<p>3.添加公钥到Github的账号<br>4.验证ssh的配置是否成功。<br>输入 ssh -T <a href="mailto:&#103;&#x69;&#x74;&#64;&#x67;&#105;&#116;&#x68;&#117;&#98;&#46;&#99;&#111;&#109;">&#103;&#x69;&#x74;&#64;&#x67;&#105;&#116;&#x68;&#117;&#98;&#46;&#99;&#111;&#109;</a>，验证密码，出现你的github用户名代表配置成功。You’ve successfully authenticated, but GitHub does not provide shell access.</p>
 <p>5.创建仓库<br>取一个仓库名，我直接使用我的用户名，但要注意，一定要在结尾加上.github.io &#x3D;&#x3D;&gt; 用户名.github.io<br>仓库code页面点击Settings&gt;Pages，这个链接就是你的博客地址，点进去是404，这是因为现在我们的Hexo还没部署上去，网站什么都没有。</p>
-<p>依赖与配置文件:<br>$ npm install hexo-deployer-git –save<br>修改配置文件:<br>deploy:<br>  type: git<br>  repository: ssh:&#x2F;&#x2F;<a href="mailto:&#x67;&#105;&#116;&#x40;&#x67;&#x69;&#x74;&#x68;&#x75;&#98;&#46;&#x63;&#x6f;&#x6d;">&#x67;&#105;&#116;&#x40;&#x67;&#x69;&#x74;&#x68;&#x75;&#98;&#46;&#x63;&#x6f;&#x6d;</a>&#x2F;用户名&#x2F;仓库名.github.io.git<br>  &#x2F;&#x2F; 比如我的就是repository: ssh:&#x2F;&#x2F;<a href="mailto:&#103;&#x69;&#x74;&#64;&#x67;&#x69;&#x74;&#x68;&#117;&#98;&#x2e;&#99;&#111;&#x6d;">&#103;&#x69;&#x74;&#64;&#x67;&#x69;&#x74;&#x68;&#117;&#98;&#x2e;&#99;&#111;&#x6d;</a>&#x2F;xxxx&#x2F;xxxx.github.io.git<br>  brandh: master<br>  messge:</p>
-<p>6.部署<br>每次重新开一个新的终端都要重新连接git：ssh -T <a href="mailto:&#103;&#x69;&#116;&#64;&#103;&#105;&#116;&#104;&#x75;&#98;&#x2e;&#99;&#111;&#109;">&#103;&#x69;&#116;&#64;&#103;&#105;&#116;&#104;&#x75;&#98;&#x2e;&#99;&#111;&#109;</a><br>执行下面命令，然后再次进入Pages的链接用户名.github.io就可以看到你的博客了。<br>hexo generate &amp;&amp; hexo deploy  或则  hexo g -d</p>
+<p>依赖与配置文件:<br>$ npm install hexo-deployer-git –save<br>修改配置文件:<br>deploy:<br>  type: git<br>  repository: ssh:&#x2F;&#x2F;<a href="mailto:&#x67;&#105;&#x74;&#64;&#103;&#x69;&#x74;&#x68;&#117;&#98;&#46;&#x63;&#x6f;&#x6d;">&#x67;&#105;&#x74;&#64;&#103;&#x69;&#x74;&#x68;&#117;&#98;&#46;&#x63;&#x6f;&#x6d;</a>&#x2F;用户名&#x2F;仓库名.github.io.git<br>  &#x2F;&#x2F; 比如我的就是repository: ssh:&#x2F;&#x2F;<a href="mailto:&#103;&#105;&#x74;&#64;&#103;&#105;&#116;&#x68;&#x75;&#x62;&#x2e;&#x63;&#111;&#109;">&#103;&#105;&#x74;&#64;&#103;&#105;&#116;&#x68;&#x75;&#x62;&#x2e;&#x63;&#111;&#109;</a>&#x2F;xxxx&#x2F;xxxx.github.io.git<br>  brandh: master<br>  messge:</p>
+<p>6.部署<br>每次重新开一个新的终端都要重新连接git：ssh -T <a href="mailto:&#103;&#x69;&#116;&#64;&#x67;&#105;&#116;&#104;&#x75;&#98;&#x2e;&#x63;&#x6f;&#x6d;">&#103;&#x69;&#116;&#64;&#x67;&#105;&#116;&#104;&#x75;&#98;&#x2e;&#x63;&#x6f;&#x6d;</a><br>执行下面命令，然后再次进入Pages的链接用户名.github.io就可以看到你的博客了。<br>hexo generate &amp;&amp; hexo deploy  或则  hexo g -d</p>
 <p>参考资料: <a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_43659725/article/details/125207584">https://blog.csdn.net/weixin_43659725/article/details/125207584</a></p>
 <p>&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D; bug的解决<br>Hexo中图片无法加载<br><a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_43659725/article/details/125329275">https://blog.csdn.net/weixin_43659725/article/details/125329275</a></p>
 <p>首先确认根目录_config.yml中有: post_asset_folder: true<br>然后在hexo站点终端下执行: npm install <a target="_blank" rel="noopener" href="https://github.com/CodeFalling/hexo-asset-image">https://github.com/CodeFalling/hexo-asset-image</a> –save			&#x2F;&#x2F; npm install hexo-asset-image –save<br>确保在&#x2F;source&#x2F;_posts下创建和md文件同名的目录，在里面放该md需要的图片，然后在md中插入:<br>![我是图片下方说明](目录名&#x2F;文件名.png)<br>配置完成之后,开启服务器查看,goto 发布</p>
@@ -363,7 +363,7 @@
         </li>
         <li>
           <strong>本文链接：</strong>
-          <a href="https://jimoying.github.io/2022/11/10/blog/hexo/hexo/" title="hexo搭建" target="_blank">https://jimoying.github.io/2022/11/10/blog/hexo/hexo/</a>
+          <a href="https://jimoying.github.io11111/2022/11/10/blog/hexo/hexo/" title="hexo搭建" target="_blank">https://jimoying.github.io11111/2022/11/10/blog/hexo/hexo/</a>
         </li>
         
         <li>
@@ -452,7 +452,7 @@
     <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-     <!-- <img src="//pan.baidu.com/share/qrcode?url=https://jimoying.github.io/2022/11/10/blog/hexo/hexo/" alt="微信分享二维码"> -->
+     <!-- <img src="//pan.baidu.com/share/qrcode?url=https://jimoying.github.io11111/2022/11/10/blog/hexo/hexo/" alt="微信分享二维码"> -->
     </div>
 </div>
 
@@ -551,7 +551,7 @@ gitalk.render('gitment-ctn')
   <div class="outer">
     <div id="footer-info">
     	<div class="footer-left">
-    		&copy; 2022-2024 <a href="https://jimoying.github.io/" target="_blank">季末影</a>
+    		&copy; 2022-2024 <a href="https://jimoying.github.io11111/" target="_blank">季末影</a>
     	</div>
       	<div class="footer-right">
 			
@@ -674,6 +674,14 @@ gitalk.render('gitment-ctn')
               </li>
              
               <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">hexo</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color2">Typora</a>
+              </li>
+             
+              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color2">Ubuntu</a>
               </li>
              
@@ -690,19 +698,11 @@ gitalk.render('gitment-ctn')
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color2">Typora</a>
+                <a href="javascript:void(0)" class="js-tag color2">kernel</a>
               </li>
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color4">elf</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">hexo</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color2">kernel</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -714,11 +714,11 @@ gitalk.render('gitment-ctn')
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">blog</a>
+                <a href="javascript:void(0)" class="js-tag color5">java</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">java</a>
+                <a href="javascript:void(0)" class="js-tag color5">blog</a>
               </li>
             
             <div class="clearfix"></div>
@@ -925,6 +925,56 @@ gitalk.render('gitment-ctn')
   
   <!-- <script async type="text/javascript" size="90" alpha="0.2" zIndex="0" src="/plugins/ribbon.js/ribbon.min.js"></script> -->
   
+  
+    <script type="text/javascript" src="/plugins/live2d-widget.js/L2Dwidget.min.js"></script>
+<script type="text/javascript">
+  /**
+   * 完整配置请参考：https://l2dwidget.js.org/docs/class/src/index.js~L2Dwidget.html#instance-method-init
+   */
+  var pluginModelPath = "assets/", // 模型的文件路径，无需更改
+    pluginRootPath = "/live2d_models/"; // 插件的路径，无需更改
+  //特定的模型json文件名称
+  var modelPathJson = {
+    "epsilon2_1": "Epsilon2.1",
+    "gf": "Gantzert_Felixander",
+    "haru/01": "haru01",
+    "haru/02": "haru02",
+    "nietzsche": "nietzche"
+  }
+
+  
+    var modelName = "hibiki";
+  
+
+  var modelJsonPath = "";
+  if (modelPathJson[modelName]) {
+    modelJsonPath = pluginRootPath + modelName + "/" + pluginModelPath + modelPathJson[modelName] +
+      ".model.json";
+  } else {
+    modelJsonPath = pluginRootPath + modelName + "/" + pluginModelPath + modelName + ".model.json";
+  }
+  L2Dwidget.init({
+    model: {
+      jsonPath: modelJsonPath
+    },
+    display: {
+       position: "right", 
+       width: 145, 
+       height: 315, 
+       hOffset: 50, 
+      
+    },
+    mobile: {
+      
+       scale: 0.6 
+    },
+    react: {
+       opacity: 0.8 
+    }
+  })
+
+</script>
+
   
   
   <script type="text/javascript" src="/lib/snow.js"></script>
