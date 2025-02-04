@@ -611,6 +611,262 @@
 
 
   
+    <article id="post-java/新建文件夹/java异步任务编排-2" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+  <div class="article-entry" itemprop="articleBody">
+    
+    <h1 id="Java8-CompletableFuture-异步编程"><a href="#Java8-CompletableFuture-异步编程" class="headerlink" title="Java8 CompletableFuture 异步编程"></a>Java8 CompletableFuture 异步编程</h1><p>原创</p>
+<p><a target="_blank" rel="noopener" href="https://blog.51cto.com/u_15704977">武汉淘淘</a> 2022-07-05 17:21:50 博主文章分类：<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_15704977/category4">JAVA</a> ©著作权</p>
+<p><strong><em>文章标签</em> <a target="_blank" rel="noopener" href="https://blog.51cto.com/topic/multithreading.html">多线程</a> <a target="_blank" rel="noopener" href="https://blog.51cto.com/topic/java.html">java</a> <a target="_blank" rel="noopener" href="https://blog.51cto.com/topic/yibu.html">异步</a> <a target="_blank" rel="noopener" href="https://blog.51cto.com/topic/yiburenwu.html">异步任务</a> <a target="_blank" rel="noopener" href="https://blog.51cto.com/topic/yichangxinxi.html">异常信息</a></strong> <strong><em>文章分类</em> <a target="_blank" rel="noopener" href="https://blog.51cto.com/nav/spark">Spark</a> <a target="_blank" rel="noopener" href="https://blog.51cto.com/nav/bigdata">大数据</a></strong></p>
+<p>©著作权归作者所有：来自51CTO博客作者武汉淘淘的原创作品，请联系作者获取转载授权，否则将追究法律责任</p>
+<h2 id="实现目标"><a href="#实现目标" class="headerlink" title="实现目标"></a>实现目标</h2><ol start="4">
+<li>理解各种异步类的使用模式，并熟练使用这些类。</li>
+<li>熟悉需要的一些线程的调用模式</li>
+</ol>
+<h2 id="学习"><a href="#学习" class="headerlink" title="学习"></a>学习</h2><h3 id="1-构造函数-supplyAsync-和-runAsync-的区别"><a href="#1-构造函数-supplyAsync-和-runAsync-的区别" class="headerlink" title="1. 构造函数 supplyAsync 和 runAsync 的区别"></a>1. 构造函数 supplyAsync 和 runAsync 的区别</h3><blockquote>
+<p>supplyAsync表示创建带返回值的异步任务的，相当于ExecutorService submit(Callable task) 方法，runAsync表示创建无返回值的异步任务，相当于ExecutorService submit(Runnable task)方法，这两方法的效果跟submit是一样的,两个方法各重载了一个可置入</p>
+</blockquote>
+<hr>
+<p>以下为回调函数</p>
+<h3 id="2-thenApply-x2F-thenApplyAsync-异步回调"><a href="#2-thenApply-x2F-thenApplyAsync-异步回调" class="headerlink" title="2. thenApply &#x2F; thenApplyAsync 异步回调"></a>2. thenApply &#x2F; thenApplyAsync 异步回调</h3><blockquote>
+<p>前者是由执行job1的线程立即执行job2，即两个job都是同一个线程执行的<br>后者是将job2提交到线程池中异步执行，实际执行job2的线程可能是另外一个线程</p>
+</blockquote>
+<h3 id="3-thenAccept-x2F-thenRun"><a href="#3-thenAccept-x2F-thenRun" class="headerlink" title="3. thenAccept &#x2F; thenRun"></a>3. thenAccept &#x2F; thenRun</h3><blockquote>
+<p>thenAccept 同 thenApply 接收上一个任务的返回值作为参数，但是无返回值；<br>thenRun 的方法没有入参，也买有返回值，测试用例如下：</p>
+</blockquote>
+<h3 id="4-exceptionally-whenComplete-handle"><a href="#4-exceptionally-whenComplete-handle" class="headerlink" title="4. exceptionally whenComplete handle"></a>4. exceptionally whenComplete handle</h3><blockquote>
+<p>whenComplete 未发生异常正常返回值发生异常就返回异常<br>exceptionally确认会发生异常<br>handle 基本一致 区别在于 handle 有返回值</p>
+</blockquote>
+<hr>
+<p>以下是组合处理</p>
+<h3 id="7-thenCombine-x2F-thenAcceptBoth-x2F-runAfterBoth"><a href="#7-thenCombine-x2F-thenAcceptBoth-x2F-runAfterBoth" class="headerlink" title="7 thenCombine &#x2F; thenAcceptBoth &#x2F; runAfterBoth"></a>7 thenCombine &#x2F; thenAcceptBoth &#x2F; runAfterBoth</h3><blockquote>
+<p>这三个方法都是将两个CompletableFuture组合起来，只有这两个都正常执行完了才会执行某个任务，区别在于，thenCombine会将两个任务的执行结果作为方法入参传递到指定方法中，且该方法有返回值；thenAcceptBoth同样将两个任务的执行结果作为方法入参，但是无返回值；runAfterBoth没有入参，也没有返回值。注意两个任务中只要有一个执行异常，则将该异常信息作为指定任务的执行结果。</p>
+</blockquote>
+<h3 id="8-applyToEither-x2F-acceptEither-x2F-runAfterEither"><a href="#8-applyToEither-x2F-acceptEither-x2F-runAfterEither" class="headerlink" title="8 applyToEither &#x2F; acceptEither &#x2F; runAfterEither"></a>8 applyToEither &#x2F; acceptEither &#x2F; runAfterEither</h3><blockquote>
+<p>三个方法都是将两个CompletableFuture组合起来，只要其中一个执行完了就会执行某个任务，其区别在于applyToEither会将已经执行完成的任务的执行结果作为方法入参，并有返回值；acceptEither同样将已经执行完成的任务的执行结果作为方法入参，但是没有返回值；runAfterEither没有方法入参，也没有返回值。注意两个任务中只要有一个执行异常，则将该异常信息作为指定任务的执行结果。</p>
+</blockquote>
+<h3 id="9-thenCompose"><a href="#9-thenCompose" class="headerlink" title="9. thenCompose"></a>9. thenCompose</h3><blockquote>
+<p>thenCompose方法会在某个任务执行完成后，将该任务的执行结果作为方法入参然后执行指定的方法，该方法会返回一个新的CompletableFuture实例，如果该CompletableFuture实例的result不为null，则返回一个基于该result的新的CompletableFuture实例；如果该CompletableFuture实例为null，则，然后执行这个新任务。</p>
+</blockquote>
+<h3 id="10-thenCompose"><a href="#10-thenCompose" class="headerlink" title="10 thenCompose"></a>10 thenCompose</h3><blockquote>
+<p>thenCompose方法会在某个任务执行完成后，将该任务的执行结果作为方法入参然后执行指定的方法，该方法会返回一个新的CompletableFuture实例，如果该CompletableFuture实例的result不为null，则返回一个基于该result的新的CompletableFuture实例；如果该CompletableFuture实例为null，则，然后执行这个新任务</p>
+</blockquote>
+<h2 id="策略"><a href="#策略" class="headerlink" title="策略"></a>策略</h2><ol>
+<li>分类API</li>
+<li>单个写场景学习</li>
+</ol>
+<h2 id="参考内容"><a href="#参考内容" class="headerlink" title="参考内容"></a>参考内容</h2><ol>
+<li>​<a target="_blank" rel="noopener" href="https://gitee.com/phui/share-concurrent">​gitee 代码​</a>​</li>
+<li>​<a href="javascript:void(0)">​强烈推荐 Java8 CompletableFuture 用法全解​</a>​</li>
+<li>​<a href="javascript:void(0)">​Java8 AbstractExecutorService 和 FutureTask 源码解析​</a>​</li>
+</ol>
+<ul>
+<li><strong><a href="javascript:;"></a>赞</strong></li>
+<li><strong><a href="javascript:;"></a>收藏</strong></li>
+<li><strong><a href="javascript:;"></a>评论</strong></li>
+<li><strong><a href="javascript:;"></a>分享</strong></li>
+<li><strong><a href="javascript:;"></a>举报</strong></li>
+</ul>
+<p>上一篇：<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_15704977/5444803">deepin安装docker</a></p>
+<p>下一篇：<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_15704977/5444807">三姬分金智力题</a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.51cto.com/"><img src="https://ucenter.51cto.com/images/noavatar_middle.gif"></a></p>
+<p>提问和评论都可以，用心的回复会被更多人看到 <strong>评论</strong></p>
+<p><strong>发布评论</strong></p>
+<p><strong>全部评论</strong> () 最热 最新</p>
+<p><strong>相关文章</strong></p>
+<ul>
+<li><p>[</p>
+<p>Future异步调用</p>
+<p>转载自<a target="_blank" rel="noopener" href="http://eyesmore.iteye.com/blog/243648%E5%9C%A8%E5%A4%9A%E7%BA%BF%E7%A8%8B%E4%BA%A4%E4%BA%92%E7%9A%84%E4%B8%AD2%EF%BC%8C%E7%BB%8F%E5%B8%B8%E6%9C%89%E4%B8%80%E4%B8%AA%E7%BA%BF%E7%A8%8B%E9%9C%80%E8%A6%81%E5%BE%97%E5%88%B0%E5%8F%A6%E4%B8%AA%E4%B8%80%E7%BA%BF%E7%A8%8B%E7%9A%84%E8%AE%A1%E7%AE%97%E7%BB%93%E6%9E%9C%EF%BC%8C%E6%88%91%E4%BB%AC%E5%B8%B8%E7%94%A8%E7%9A%84%E6%98%AFFuture%E5%BC%82%E6%AD%A5%E6%A8%A1%E5%BC%8F%E6%9D%A5%E5%8A%A0%E4%BB%A5%E8%A7%A3%E5%86%B3%E3%80%82Future%E9%A1%BE%E5%90%8D%E6%80%9D%E6%84%8F%EF%BC%8C%E6%9C%89%E7%82%B9%E5%83%8F%E6%9C%9F%E8%B4%A7%E5%B8%82%E5%9C%BA%E7%9A%84&ldquo;%E6%9C%9F%E6%9D%83&rdquo;%EF%BC%8C%E6%98%AF&ldquo;%E5%AF%B9%E6%9C%AA%E6%9D%A5%E7%9A%84%E4%B8%80%E7%A7%8D%E5%87%AD%E8%AF%81&rdquo;%EF%BC%8C%E4%BE%8B%E5%A6%82%E5%BD%93%E6%88%91%E4%BB%AC%E4%B9%B0%E4%BA%86%E6%9F%90%E4%B8%AA%E6%88%BF%E5%9C%B0%E4%BA%A7%E5%BC%80%E5%8F%91%E5%95%86%E7%9A%84%E6%9C%9F%E6%88%BF%EF%BC%8C%E4%BA%A4%E9%92%B1%E4%B9%8B%E5%90%8E%EF%BC%8C%E5%BC%80%E5%8F%91%E5%95%86%E4%BC%9A%E7%BB%99%E6%88%91%E4%BB%AC%E4%B8%80%E4%B8%AA%E5%87%AD%E8%AF%81%EF%BC%88%E6%9C%9F%E6%9D%83%EF%BC%89%EF%BC%8C%E8%BF%99%E4%B8%AA">http://eyesmore.iteye.com/blog/243648在多线程交互的中2，经常有一个线程需要得到另个一线程的计算结果，我们常用的是Future异步模式来加以解决。Future顾名思意，有点像期货市场的&ldquo;期权&rdquo;，是&ldquo;对未来的一种凭证&rdquo;，例如当我们买了某个房地产开发商的期房，交钱之后，开发商会给我们一个凭证（期权），这个</a></p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/wj1891010/571551">https://blog.51cto.com/wj1891010/571551</a>)</p>
+<p>职场 多线程 休闲 异步调用</p>
+</li>
+<li><p>[</p>
+<p>异步编程：promise and future</p>
+<p>本文介绍C++中异步编程相关的基础操作类，以及借鉴promise and future思想解决回调地狱介绍。std::thread and std::jthreadstd::thread为C++11引入，一个简单的例子如下：class Worker final {public: void Execute() { std::cout &lt;&lt; __FUNCT</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_13137973/7157569">https://blog.51cto.com/u_13137973/7157569</a>)</p>
+<p>cpp</p>
+</li>
+<li><p>[</p>
+<p>Java 8 Future、FutureTask、CompletableFuture 异步任务</p>
+<p>Java 8 Future、FutureTask、CompletableFuture 异步任务</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_15891990/5908872">https://blog.51cto.com/u_15891990/5908872</a>)</p>
+<p>数据 异步任务 程序运行</p>
+</li>
+<li><p>[</p>
+<p>Future：异步任务结果获取</p>
+<p>FutureTask 异步任务结果获取，ExecutorCompletionService 最佳实践，让并发编程获取任务结果更高效。</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/MageByte/2934217">https://blog.51cto.com/MageByte/2934217</a>)</p>
+<p>Future：异步任务结果获取</p>
+</li>
+<li><p>[</p>
+<p>Java多线程–使用future进行异步编程</p>
+<p>* 使用future进行异步编程* 缺点：* 不知道何时结束* 阻塞获取结果import java.util.co</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/zhangxueliang/4957961">https://blog.51cto.com/zhangxueliang/4957961</a>)</p>
+<p>java 异步编程</p>
+</li>
+<li><p>[</p>
+<p>Java异步之《我call()，Future在哪里》</p>
+<p>我们大家都知道，在 Java 中创建线程主要有三种方式： 继承 Thread 类； 实现 Runnable 接口； 实现 Callable 接口。 而后两者的区别在于 Callable 接口中的 call() 方法可以异步地返回一个计算结果 Future，并且一般需要配合ExecutorServic</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_13296497/3381337">https://blog.51cto.com/u_13296497/3381337</a>)</p>
+<p>后端 Java 线程池 子线程 主线程</p>
+</li>
+<li><p>[</p>
+<p>Future和FutureTask实现异步计算</p>
+<p>Java中使用Future和FutureTask实现异步计算</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/stevex/1576546">https://blog.51cto.com/stevex/1576546</a>)</p>
+<p>Future FutureTask</p>
+</li>
+<li><p>[</p>
+<p>flutter中的异步机制Future</p>
+<p>饿补一下Flutter中Http请求的异步操作。 Dart是一个单线程语言，可以理解成物理线路中的串联，当其遇到有延迟的运算（比如IO操作、延时执行）时，线程中按顺序执行的运算就会阻塞，用户就会感觉到卡顿，于是通常用异步处理来解决这个问题。 Dart异步编程有两种方式：Future和Stream F</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_11827525/2854487">https://blog.51cto.com/u_11827525/2854487</a>)</p>
+<p>flutter flutter教程 flutter案例</p>
+</li>
+<li><p>[</p>
+<p>异步获取线程计算的结果-Future</p>
+<p>Future 接口是 JDK1.5 开始提供，它的作用是异步获取线程计算的结果。看一个等待、获取任务执行结果的例子:package constxiong.interview;import java.util.concurrent.ExecutionException;import java.util.concurrent.ExecutorService;import java.util.concu</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_15061941/2591872">https://blog.51cto.com/u_15061941/2591872</a>)</p>
+<p>java</p>
+</li>
+<li><p>[</p>
+<p>Java | 一分钟掌握异步编程 | 4 - Future异步</p>
+<p> 作者：Mars酱 声明：本文章由Mars酱编写，部分内容来源于网络，如有疑问请联系本人。 转载：欢迎转载，转载前先请联系我！前言前篇 Java | 一分钟掌握异步编程 | 3 - 线程异步 - 掘金 (juejin.cn) 介绍了实现多线程异步处理业务的方式，但是我们无法获取到线程返回的结果，这是在JDK 5之前Java版本的小小缺陷，在Java 5之后，增加了Fu</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/marsz/6172043">https://blog.51cto.com/marsz/6172043</a>)</p>
+<p>Java Future</p>
+</li>
+<li><p>[</p>
+<p>并发基础-Future异步回调模式</p>
+<p>文章目录并发基础中的Future异步回调模式背景泡茶案例join异步阻塞使用join实现异步泡茶喝的实践案例join合并方法FutureTask</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_15776588/5644780">https://blog.51cto.com/u_15776588/5644780</a>)</p>
+<p>netty Future异步回调 java 主线程 ide</p>
+</li>
+<li><p>[</p>
+<p>Netty异步模型Future-Listener机制</p>
+<p>链式处理每一步都有handler进行监听callback或future服务端代码addListener其他模块与下列连接一致</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_15477378/5143166">https://blog.51cto.com/u_15477378/5143166</a>)</p>
+<p>java bootstrap ios ide</p>
+</li>
+<li><p>[</p>
+<p>future java异步编程 java异步编程框架</p>
+<p>1 Executor框架的简介    1.5后引入的Executor框架的最大优点是把任务的提交和执行解耦。要执行任务的人只需把Task描述清楚，然后提交即可。这个Task是怎么被执行的，被谁执行的，什么时候执行的，提交的人就不用关心了。具体点讲，提交一个Callable对象给ExecutorService（如最常用的线程池ThreadPoolExec</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_87634/6756712">https://blog.51cto.com/u_87634/6756712</a>)</p>
+<p>future java异步编程 java 线程池 主线程 返回结果</p>
+</li>
+<li><p>[</p>
+<p>Future java 异步获得结果 java实现异步</p>
+<p>1.概述随着对编写非阻塞代码的需求不断增长，我们需要异步执行代码的方法。在本教程中，我们将介绍几种使用Java实现异步编程的方法。另外，我们将探索一些提供即用型解决方案的Java库。 2. Java中的异步编程2.1 线我们可以创建一个新线程来异步执行任何操作。随着Java 8 中lambda表达式的发布，它变得更干净，更易读。让我们创建一个新的线程来计算和打印数字的阶乘：int nu</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16213564/7443524">https://blog.51cto.com/u_16213564/7443524</a>)</p>
+<p>Future java 异步获得结果 java 异步 java异步 java阶乘 Async</p>
+</li>
+<li><p>[</p>
+<p>future java 异步返回 java 异步回调</p>
+<p>文章目录前言一、回调简单理解二、Java中用接口实现回调1.实现接口回调1.1同步回调1.2 异步回调2.为啥要用接口实现3.关于接口(基础)总结 前言本文是作者在学习接口回调时看到 帖子中后，对其内容的理解和补充，仅供学习参考，如有错误感谢指正。一、回调简单理解小明和小李要一起去吃饭，但小李要先洗个脸。那么正常流程应该是小李先去洗个脸，然后通知小明一起去吃饭。 下面是一个简单的例子，小明等效</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099358/6761304">https://blog.51cto.com/u_16099358/6761304</a>)</p>
+<p>future java 异步返回 java 编程语言 多线程 接口</p>
+</li>
+<li><p>[</p>
+<p>java future异步 java异步是什么意思</p>
+<p>在 Java 中，同步(Synchronization)是指一个线程获得了对象的锁，其他线程无法访问这个对象，直到该线程释放了这个对象的锁。同步是用于保证多个线程对共享资源的操作是互斥的，从而避免多线程带来的冲突。异步(Asynchronization)则指不需要等待另一个操作的完成，而是在它进行的同时继续执行其他操作。异步的好处在于可以提高程序的效率，因为它不需要等待另一个操作的完成，可以同时执</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099333/6575702">https://blog.51cto.com/u_16099333/6575702</a>)</p>
+<p>java future异步 java jvm 开发语言 多线程</p>
+</li>
+<li><p>[</p>
+<p>java future 异步返回结果 java 异步回调</p>
+<p>java I&#x2F;O的经历了BIO(Blocking IO),NIO(Non-blocking IO),AIO(Async-I&#x2F;O)，这些IO技术的发展都是依托已java版本的更新。 本文主要研究一下java的异步回调机制， 主要针对juc包下的Future,Callable，FutureTask。**业务场景 ** 假定我们有这样一个业务场景，烧一壶开水，烧一壶开水有如下几个步骤：加水打开煤气烧水i</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16213672/7185777">https://blog.51cto.com/u_16213672/7185777</a>)</p>
+<p>java future 异步返回结果 java 回调 System ide</p>
+</li>
+<li><p>[</p>
+<p>future get异步 java 线程池 java 异步线程写法</p>
+<p>Springboot 中异步线程的使用在过往的后台开发中，我们往往使用java自带的线程或线程池，来进行异步的调用。这对于效果来说没什么，甚至可以让开发人员对底层的状况更清晰，但是对于代码的易读性和可维护性却非常的差。开发人员在实际使用过程中，应该更多的将精力放置在业务代码的书写过程中，而不是系统代码的维护中。你需要懂，但是不需要你直接维护去写，这才是编程语言的风向标。（这也是为什么spring在</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099264/6691828">https://blog.51cto.com/u_16099264/6691828</a>)</p>
+<p>java spring boot spring Async 线程池</p>
+</li>
+<li><p>[</p>
+<p>.net core 获取异步方法结果 netty future获取异步</p>
+<p>Netty 中的异步编程 Future 和 Promise Netty 中大量 I&#x2F;O 操作都是异步执行，本篇博文来聊聊 Netty 中的异步编程。Java Future 提供的异步模型JDK 5 引入了 Future 模式。Future 接口是 Java 多线程 Future 模式的实现，在 java.util.concurrent包中，可以来进行异</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16213667/7033383">https://blog.51cto.com/u_16213667/7033383</a>)</p>
+<p>.net core 获取异步方法结果 System 异步编程 线程池</p>
+</li>
+<li><p>[</p>
+<p># FastDFS+FastDHT(单机+集群版) 使用docker-compose创建FastDFS+FastDHT(单机+集 docker搭建fastdfs</p>
+<p>安装 拉取镜像docker pull delron&#x2F;fastdfs创建本机存储目录rm -fR &#x2F;home&#x2F;docker&#x2F;fastdfs&#x2F;{tracker,storage} mkdir &#x2F;home&#x2F;docker&#x2F;fastdfs&#x2F;{tracker,storage} -p启动tracker[root@VM_80_14_centos ~]# docker run -d &gt; –network&#x3D;</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_14499/7735843">https://blog.51cto.com/u_14499/7735843</a>)</p>
+<p>docker安装fastdfs fastdfs 测试客户端 fastdfs搭建 docker 上传</p>
+</li>
+<li><p>[</p>
+<p>javascript好难学啊 javascript容易学吗</p>
+<p>JavaScript给初学者的印象总是那么的“杂而乱”，相信很多初学者都在找轻松学习JavaScript的途径。我试着总结自己学习多年JavaScript的经验，希望能给后来的学习者探索出一条“轻松学习JavaScript之路”。JavaScript给人那种感觉的原因多半是因为它如下的特点：A：本身知识很抽象、晦涩难懂，如：闭包、内置对象、DOM。B：本身内容很多，如函数库，对象库就一大堆。C：混</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099297/7738890">https://blog.51cto.com/u_16099297/7738890</a>)</p>
+<p>javascript好难学啊 javascript 前端 设计模式 ViewUI</p>
+</li>
+<li><p>[</p>
+<p>《聊聊架构》 聊天框架思维实战案例</p>
+<p>各位亲： 由于过年（回家没有网络），本次更新为四篇文章。本篇是第一篇，主要介绍如何实现聊天消息的发送 框架的设计，这里主要设计到了观察者模式的应用。 首先在此祝大家新年快乐。 如果在公司某一天你的老大过来说，小张在咱们的app中的添加一个聊天功能吧（貌似支付宝正在推广这 个）。这个时候你是否一头雾水，什么IM协议，消息类型都不知道，那你要 怎么做呢？如何去调研等等工作呢？还</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099227/7741445">https://blog.51cto.com/u_16099227/7741445</a>)</p>
+<p>《聊聊架构》 ui 框架 聊天 ide</p>
+</li>
+<li><p>[</p>
+<p>MySQL各个区服的排行榜统计成总榜 mysql服务器在哪</p>
+<p>MySQL 的服务器下载地址：<a target="_blank" rel="noopener" href="https://dev.mysql.com/downloads/mysql/5.7.html#downloadsMySQL">https://dev.mysql.com/downloads/mysql/5.7.html#downloadsMySQL</a> 安装与配置准备工作在 C 盘根目录建立目录： c:\develop解压并移动位置解压缩 mysql-5.7.23 的压缩包，将其中的 mysql-5.7.23-xxxxx 目录移动到 C:\develop 目录下并把名字修改为 mysqlMySQ</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16213674/7741934">https://blog.51cto.com/u_16213674/7741934</a>)</p>
+<p>MySQL各个区服的排行榜统计成总榜 mysql MySQL SQL</p>
+</li>
+<li><p>[</p>
+<p>spring boot nacos 修改命名空间 springboot修改包名</p>
+<p>Springboot修改项目名称包名1、在文件夹中将项目重命名 2、IDEA打开项目；3、重命名下图所示iml文件; 4、打开Project Structure，修改项目名称，改完后项目名称会对应改变； 5、打开pom.xml文件，修改两处； 6、修改配置文件application.yml中服务名； 7、修改包名：右击包名，重命名，选择Rename package，修改名称即可； 8、右击启动类重</p>
+<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16213581/7743249">https://blog.51cto.com/u_16213581/7743249</a>)</p>
+<p>git java 远程仓库 上传 重命名</p>
+</li>
+</ul>
+<p>本文转自 <a target="_blank" rel="noopener" href="https://blog.51cto.com/u_15704977/5444805">https://blog.51cto.com/u_15704977&#x2F;5444805</a>，如有侵权，请联系删除。</p>
+
+    
+
+    
+
+    
+
+  </div>
+  <div class="article-info article-info-index">
+    
+    
+    
+
+    
+    <p class="article-more-link">
+      <a class="article-more-a" href="/2024/03/07/java/%E6%96%B0%E5%BB%BA%E6%96%87%E4%BB%B6%E5%A4%B9/java%E5%BC%82%E6%AD%A5%E4%BB%BB%E5%8A%A1%E7%BC%96%E6%8E%92-2/">展开全文 >></a>
+    </p>
+    
+
+    
+    <div class="clearfix"></div>
+  </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-java/新建文件夹/java异步任务编排-1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -896,262 +1152,6 @@
 
 
   
-    <article id="post-java/新建文件夹/java异步任务编排-2" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-  <div class="article-entry" itemprop="articleBody">
-    
-    <h1 id="Java8-CompletableFuture-异步编程"><a href="#Java8-CompletableFuture-异步编程" class="headerlink" title="Java8 CompletableFuture 异步编程"></a>Java8 CompletableFuture 异步编程</h1><p>原创</p>
-<p><a target="_blank" rel="noopener" href="https://blog.51cto.com/u_15704977">武汉淘淘</a> 2022-07-05 17:21:50 博主文章分类：<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_15704977/category4">JAVA</a> ©著作权</p>
-<p><strong><em>文章标签</em> <a target="_blank" rel="noopener" href="https://blog.51cto.com/topic/multithreading.html">多线程</a> <a target="_blank" rel="noopener" href="https://blog.51cto.com/topic/java.html">java</a> <a target="_blank" rel="noopener" href="https://blog.51cto.com/topic/yibu.html">异步</a> <a target="_blank" rel="noopener" href="https://blog.51cto.com/topic/yiburenwu.html">异步任务</a> <a target="_blank" rel="noopener" href="https://blog.51cto.com/topic/yichangxinxi.html">异常信息</a></strong> <strong><em>文章分类</em> <a target="_blank" rel="noopener" href="https://blog.51cto.com/nav/spark">Spark</a> <a target="_blank" rel="noopener" href="https://blog.51cto.com/nav/bigdata">大数据</a></strong></p>
-<p>©著作权归作者所有：来自51CTO博客作者武汉淘淘的原创作品，请联系作者获取转载授权，否则将追究法律责任</p>
-<h2 id="实现目标"><a href="#实现目标" class="headerlink" title="实现目标"></a>实现目标</h2><ol start="4">
-<li>理解各种异步类的使用模式，并熟练使用这些类。</li>
-<li>熟悉需要的一些线程的调用模式</li>
-</ol>
-<h2 id="学习"><a href="#学习" class="headerlink" title="学习"></a>学习</h2><h3 id="1-构造函数-supplyAsync-和-runAsync-的区别"><a href="#1-构造函数-supplyAsync-和-runAsync-的区别" class="headerlink" title="1. 构造函数 supplyAsync 和 runAsync 的区别"></a>1. 构造函数 supplyAsync 和 runAsync 的区别</h3><blockquote>
-<p>supplyAsync表示创建带返回值的异步任务的，相当于ExecutorService submit(Callable task) 方法，runAsync表示创建无返回值的异步任务，相当于ExecutorService submit(Runnable task)方法，这两方法的效果跟submit是一样的,两个方法各重载了一个可置入</p>
-</blockquote>
-<hr>
-<p>以下为回调函数</p>
-<h3 id="2-thenApply-x2F-thenApplyAsync-异步回调"><a href="#2-thenApply-x2F-thenApplyAsync-异步回调" class="headerlink" title="2. thenApply &#x2F; thenApplyAsync 异步回调"></a>2. thenApply &#x2F; thenApplyAsync 异步回调</h3><blockquote>
-<p>前者是由执行job1的线程立即执行job2，即两个job都是同一个线程执行的<br>后者是将job2提交到线程池中异步执行，实际执行job2的线程可能是另外一个线程</p>
-</blockquote>
-<h3 id="3-thenAccept-x2F-thenRun"><a href="#3-thenAccept-x2F-thenRun" class="headerlink" title="3. thenAccept &#x2F; thenRun"></a>3. thenAccept &#x2F; thenRun</h3><blockquote>
-<p>thenAccept 同 thenApply 接收上一个任务的返回值作为参数，但是无返回值；<br>thenRun 的方法没有入参，也买有返回值，测试用例如下：</p>
-</blockquote>
-<h3 id="4-exceptionally-whenComplete-handle"><a href="#4-exceptionally-whenComplete-handle" class="headerlink" title="4. exceptionally whenComplete handle"></a>4. exceptionally whenComplete handle</h3><blockquote>
-<p>whenComplete 未发生异常正常返回值发生异常就返回异常<br>exceptionally确认会发生异常<br>handle 基本一致 区别在于 handle 有返回值</p>
-</blockquote>
-<hr>
-<p>以下是组合处理</p>
-<h3 id="7-thenCombine-x2F-thenAcceptBoth-x2F-runAfterBoth"><a href="#7-thenCombine-x2F-thenAcceptBoth-x2F-runAfterBoth" class="headerlink" title="7 thenCombine &#x2F; thenAcceptBoth &#x2F; runAfterBoth"></a>7 thenCombine &#x2F; thenAcceptBoth &#x2F; runAfterBoth</h3><blockquote>
-<p>这三个方法都是将两个CompletableFuture组合起来，只有这两个都正常执行完了才会执行某个任务，区别在于，thenCombine会将两个任务的执行结果作为方法入参传递到指定方法中，且该方法有返回值；thenAcceptBoth同样将两个任务的执行结果作为方法入参，但是无返回值；runAfterBoth没有入参，也没有返回值。注意两个任务中只要有一个执行异常，则将该异常信息作为指定任务的执行结果。</p>
-</blockquote>
-<h3 id="8-applyToEither-x2F-acceptEither-x2F-runAfterEither"><a href="#8-applyToEither-x2F-acceptEither-x2F-runAfterEither" class="headerlink" title="8 applyToEither &#x2F; acceptEither &#x2F; runAfterEither"></a>8 applyToEither &#x2F; acceptEither &#x2F; runAfterEither</h3><blockquote>
-<p>三个方法都是将两个CompletableFuture组合起来，只要其中一个执行完了就会执行某个任务，其区别在于applyToEither会将已经执行完成的任务的执行结果作为方法入参，并有返回值；acceptEither同样将已经执行完成的任务的执行结果作为方法入参，但是没有返回值；runAfterEither没有方法入参，也没有返回值。注意两个任务中只要有一个执行异常，则将该异常信息作为指定任务的执行结果。</p>
-</blockquote>
-<h3 id="9-thenCompose"><a href="#9-thenCompose" class="headerlink" title="9. thenCompose"></a>9. thenCompose</h3><blockquote>
-<p>thenCompose方法会在某个任务执行完成后，将该任务的执行结果作为方法入参然后执行指定的方法，该方法会返回一个新的CompletableFuture实例，如果该CompletableFuture实例的result不为null，则返回一个基于该result的新的CompletableFuture实例；如果该CompletableFuture实例为null，则，然后执行这个新任务。</p>
-</blockquote>
-<h3 id="10-thenCompose"><a href="#10-thenCompose" class="headerlink" title="10 thenCompose"></a>10 thenCompose</h3><blockquote>
-<p>thenCompose方法会在某个任务执行完成后，将该任务的执行结果作为方法入参然后执行指定的方法，该方法会返回一个新的CompletableFuture实例，如果该CompletableFuture实例的result不为null，则返回一个基于该result的新的CompletableFuture实例；如果该CompletableFuture实例为null，则，然后执行这个新任务</p>
-</blockquote>
-<h2 id="策略"><a href="#策略" class="headerlink" title="策略"></a>策略</h2><ol>
-<li>分类API</li>
-<li>单个写场景学习</li>
-</ol>
-<h2 id="参考内容"><a href="#参考内容" class="headerlink" title="参考内容"></a>参考内容</h2><ol>
-<li>​<a target="_blank" rel="noopener" href="https://gitee.com/phui/share-concurrent">​gitee 代码​</a>​</li>
-<li>​<a href="javascript:void(0)">​强烈推荐 Java8 CompletableFuture 用法全解​</a>​</li>
-<li>​<a href="javascript:void(0)">​Java8 AbstractExecutorService 和 FutureTask 源码解析​</a>​</li>
-</ol>
-<ul>
-<li><strong><a href="javascript:;"></a>赞</strong></li>
-<li><strong><a href="javascript:;"></a>收藏</strong></li>
-<li><strong><a href="javascript:;"></a>评论</strong></li>
-<li><strong><a href="javascript:;"></a>分享</strong></li>
-<li><strong><a href="javascript:;"></a>举报</strong></li>
-</ul>
-<p>上一篇：<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_15704977/5444803">deepin安装docker</a></p>
-<p>下一篇：<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_15704977/5444807">三姬分金智力题</a></p>
-<p><a target="_blank" rel="noopener" href="https://blog.51cto.com/"><img src="https://ucenter.51cto.com/images/noavatar_middle.gif"></a></p>
-<p>提问和评论都可以，用心的回复会被更多人看到 <strong>评论</strong></p>
-<p><strong>发布评论</strong></p>
-<p><strong>全部评论</strong> () 最热 最新</p>
-<p><strong>相关文章</strong></p>
-<ul>
-<li><p>[</p>
-<p>Future异步调用</p>
-<p>转载自<a target="_blank" rel="noopener" href="http://eyesmore.iteye.com/blog/243648%E5%9C%A8%E5%A4%9A%E7%BA%BF%E7%A8%8B%E4%BA%A4%E4%BA%92%E7%9A%84%E4%B8%AD2%EF%BC%8C%E7%BB%8F%E5%B8%B8%E6%9C%89%E4%B8%80%E4%B8%AA%E7%BA%BF%E7%A8%8B%E9%9C%80%E8%A6%81%E5%BE%97%E5%88%B0%E5%8F%A6%E4%B8%AA%E4%B8%80%E7%BA%BF%E7%A8%8B%E7%9A%84%E8%AE%A1%E7%AE%97%E7%BB%93%E6%9E%9C%EF%BC%8C%E6%88%91%E4%BB%AC%E5%B8%B8%E7%94%A8%E7%9A%84%E6%98%AFFuture%E5%BC%82%E6%AD%A5%E6%A8%A1%E5%BC%8F%E6%9D%A5%E5%8A%A0%E4%BB%A5%E8%A7%A3%E5%86%B3%E3%80%82Future%E9%A1%BE%E5%90%8D%E6%80%9D%E6%84%8F%EF%BC%8C%E6%9C%89%E7%82%B9%E5%83%8F%E6%9C%9F%E8%B4%A7%E5%B8%82%E5%9C%BA%E7%9A%84&ldquo;%E6%9C%9F%E6%9D%83&rdquo;%EF%BC%8C%E6%98%AF&ldquo;%E5%AF%B9%E6%9C%AA%E6%9D%A5%E7%9A%84%E4%B8%80%E7%A7%8D%E5%87%AD%E8%AF%81&rdquo;%EF%BC%8C%E4%BE%8B%E5%A6%82%E5%BD%93%E6%88%91%E4%BB%AC%E4%B9%B0%E4%BA%86%E6%9F%90%E4%B8%AA%E6%88%BF%E5%9C%B0%E4%BA%A7%E5%BC%80%E5%8F%91%E5%95%86%E7%9A%84%E6%9C%9F%E6%88%BF%EF%BC%8C%E4%BA%A4%E9%92%B1%E4%B9%8B%E5%90%8E%EF%BC%8C%E5%BC%80%E5%8F%91%E5%95%86%E4%BC%9A%E7%BB%99%E6%88%91%E4%BB%AC%E4%B8%80%E4%B8%AA%E5%87%AD%E8%AF%81%EF%BC%88%E6%9C%9F%E6%9D%83%EF%BC%89%EF%BC%8C%E8%BF%99%E4%B8%AA">http://eyesmore.iteye.com/blog/243648在多线程交互的中2，经常有一个线程需要得到另个一线程的计算结果，我们常用的是Future异步模式来加以解决。Future顾名思意，有点像期货市场的&ldquo;期权&rdquo;，是&ldquo;对未来的一种凭证&rdquo;，例如当我们买了某个房地产开发商的期房，交钱之后，开发商会给我们一个凭证（期权），这个</a></p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/wj1891010/571551">https://blog.51cto.com/wj1891010/571551</a>)</p>
-<p>职场 多线程 休闲 异步调用</p>
-</li>
-<li><p>[</p>
-<p>异步编程：promise and future</p>
-<p>本文介绍C++中异步编程相关的基础操作类，以及借鉴promise and future思想解决回调地狱介绍。std::thread and std::jthreadstd::thread为C++11引入，一个简单的例子如下：class Worker final {public: void Execute() { std::cout &lt;&lt; __FUNCT</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_13137973/7157569">https://blog.51cto.com/u_13137973/7157569</a>)</p>
-<p>cpp</p>
-</li>
-<li><p>[</p>
-<p>Java 8 Future、FutureTask、CompletableFuture 异步任务</p>
-<p>Java 8 Future、FutureTask、CompletableFuture 异步任务</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_15891990/5908872">https://blog.51cto.com/u_15891990/5908872</a>)</p>
-<p>数据 异步任务 程序运行</p>
-</li>
-<li><p>[</p>
-<p>Future：异步任务结果获取</p>
-<p>FutureTask 异步任务结果获取，ExecutorCompletionService 最佳实践，让并发编程获取任务结果更高效。</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/MageByte/2934217">https://blog.51cto.com/MageByte/2934217</a>)</p>
-<p>Future：异步任务结果获取</p>
-</li>
-<li><p>[</p>
-<p>Java多线程–使用future进行异步编程</p>
-<p>* 使用future进行异步编程* 缺点：* 不知道何时结束* 阻塞获取结果import java.util.co</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/zhangxueliang/4957961">https://blog.51cto.com/zhangxueliang/4957961</a>)</p>
-<p>java 异步编程</p>
-</li>
-<li><p>[</p>
-<p>Java异步之《我call()，Future在哪里》</p>
-<p>我们大家都知道，在 Java 中创建线程主要有三种方式： 继承 Thread 类； 实现 Runnable 接口； 实现 Callable 接口。 而后两者的区别在于 Callable 接口中的 call() 方法可以异步地返回一个计算结果 Future，并且一般需要配合ExecutorServic</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_13296497/3381337">https://blog.51cto.com/u_13296497/3381337</a>)</p>
-<p>后端 Java 线程池 子线程 主线程</p>
-</li>
-<li><p>[</p>
-<p>Future和FutureTask实现异步计算</p>
-<p>Java中使用Future和FutureTask实现异步计算</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/stevex/1576546">https://blog.51cto.com/stevex/1576546</a>)</p>
-<p>Future FutureTask</p>
-</li>
-<li><p>[</p>
-<p>flutter中的异步机制Future</p>
-<p>饿补一下Flutter中Http请求的异步操作。 Dart是一个单线程语言，可以理解成物理线路中的串联，当其遇到有延迟的运算（比如IO操作、延时执行）时，线程中按顺序执行的运算就会阻塞，用户就会感觉到卡顿，于是通常用异步处理来解决这个问题。 Dart异步编程有两种方式：Future和Stream F</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_11827525/2854487">https://blog.51cto.com/u_11827525/2854487</a>)</p>
-<p>flutter flutter教程 flutter案例</p>
-</li>
-<li><p>[</p>
-<p>异步获取线程计算的结果-Future</p>
-<p>Future 接口是 JDK1.5 开始提供，它的作用是异步获取线程计算的结果。看一个等待、获取任务执行结果的例子:package constxiong.interview;import java.util.concurrent.ExecutionException;import java.util.concurrent.ExecutorService;import java.util.concu</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_15061941/2591872">https://blog.51cto.com/u_15061941/2591872</a>)</p>
-<p>java</p>
-</li>
-<li><p>[</p>
-<p>Java | 一分钟掌握异步编程 | 4 - Future异步</p>
-<p> 作者：Mars酱 声明：本文章由Mars酱编写，部分内容来源于网络，如有疑问请联系本人。 转载：欢迎转载，转载前先请联系我！前言前篇 Java | 一分钟掌握异步编程 | 3 - 线程异步 - 掘金 (juejin.cn) 介绍了实现多线程异步处理业务的方式，但是我们无法获取到线程返回的结果，这是在JDK 5之前Java版本的小小缺陷，在Java 5之后，增加了Fu</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/marsz/6172043">https://blog.51cto.com/marsz/6172043</a>)</p>
-<p>Java Future</p>
-</li>
-<li><p>[</p>
-<p>并发基础-Future异步回调模式</p>
-<p>文章目录并发基础中的Future异步回调模式背景泡茶案例join异步阻塞使用join实现异步泡茶喝的实践案例join合并方法FutureTask</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_15776588/5644780">https://blog.51cto.com/u_15776588/5644780</a>)</p>
-<p>netty Future异步回调 java 主线程 ide</p>
-</li>
-<li><p>[</p>
-<p>Netty异步模型Future-Listener机制</p>
-<p>链式处理每一步都有handler进行监听callback或future服务端代码addListener其他模块与下列连接一致</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_15477378/5143166">https://blog.51cto.com/u_15477378/5143166</a>)</p>
-<p>java bootstrap ios ide</p>
-</li>
-<li><p>[</p>
-<p>future java异步编程 java异步编程框架</p>
-<p>1 Executor框架的简介    1.5后引入的Executor框架的最大优点是把任务的提交和执行解耦。要执行任务的人只需把Task描述清楚，然后提交即可。这个Task是怎么被执行的，被谁执行的，什么时候执行的，提交的人就不用关心了。具体点讲，提交一个Callable对象给ExecutorService（如最常用的线程池ThreadPoolExec</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_87634/6756712">https://blog.51cto.com/u_87634/6756712</a>)</p>
-<p>future java异步编程 java 线程池 主线程 返回结果</p>
-</li>
-<li><p>[</p>
-<p>Future java 异步获得结果 java实现异步</p>
-<p>1.概述随着对编写非阻塞代码的需求不断增长，我们需要异步执行代码的方法。在本教程中，我们将介绍几种使用Java实现异步编程的方法。另外，我们将探索一些提供即用型解决方案的Java库。 2. Java中的异步编程2.1 线我们可以创建一个新线程来异步执行任何操作。随着Java 8 中lambda表达式的发布，它变得更干净，更易读。让我们创建一个新的线程来计算和打印数字的阶乘：int nu</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16213564/7443524">https://blog.51cto.com/u_16213564/7443524</a>)</p>
-<p>Future java 异步获得结果 java 异步 java异步 java阶乘 Async</p>
-</li>
-<li><p>[</p>
-<p>future java 异步返回 java 异步回调</p>
-<p>文章目录前言一、回调简单理解二、Java中用接口实现回调1.实现接口回调1.1同步回调1.2 异步回调2.为啥要用接口实现3.关于接口(基础)总结 前言本文是作者在学习接口回调时看到 帖子中后，对其内容的理解和补充，仅供学习参考，如有错误感谢指正。一、回调简单理解小明和小李要一起去吃饭，但小李要先洗个脸。那么正常流程应该是小李先去洗个脸，然后通知小明一起去吃饭。 下面是一个简单的例子，小明等效</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099358/6761304">https://blog.51cto.com/u_16099358/6761304</a>)</p>
-<p>future java 异步返回 java 编程语言 多线程 接口</p>
-</li>
-<li><p>[</p>
-<p>java future异步 java异步是什么意思</p>
-<p>在 Java 中，同步(Synchronization)是指一个线程获得了对象的锁，其他线程无法访问这个对象，直到该线程释放了这个对象的锁。同步是用于保证多个线程对共享资源的操作是互斥的，从而避免多线程带来的冲突。异步(Asynchronization)则指不需要等待另一个操作的完成，而是在它进行的同时继续执行其他操作。异步的好处在于可以提高程序的效率，因为它不需要等待另一个操作的完成，可以同时执</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099333/6575702">https://blog.51cto.com/u_16099333/6575702</a>)</p>
-<p>java future异步 java jvm 开发语言 多线程</p>
-</li>
-<li><p>[</p>
-<p>java future 异步返回结果 java 异步回调</p>
-<p>java I&#x2F;O的经历了BIO(Blocking IO),NIO(Non-blocking IO),AIO(Async-I&#x2F;O)，这些IO技术的发展都是依托已java版本的更新。 本文主要研究一下java的异步回调机制， 主要针对juc包下的Future,Callable，FutureTask。**业务场景 ** 假定我们有这样一个业务场景，烧一壶开水，烧一壶开水有如下几个步骤：加水打开煤气烧水i</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16213672/7185777">https://blog.51cto.com/u_16213672/7185777</a>)</p>
-<p>java future 异步返回结果 java 回调 System ide</p>
-</li>
-<li><p>[</p>
-<p>future get异步 java 线程池 java 异步线程写法</p>
-<p>Springboot 中异步线程的使用在过往的后台开发中，我们往往使用java自带的线程或线程池，来进行异步的调用。这对于效果来说没什么，甚至可以让开发人员对底层的状况更清晰，但是对于代码的易读性和可维护性却非常的差。开发人员在实际使用过程中，应该更多的将精力放置在业务代码的书写过程中，而不是系统代码的维护中。你需要懂，但是不需要你直接维护去写，这才是编程语言的风向标。（这也是为什么spring在</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099264/6691828">https://blog.51cto.com/u_16099264/6691828</a>)</p>
-<p>java spring boot spring Async 线程池</p>
-</li>
-<li><p>[</p>
-<p>.net core 获取异步方法结果 netty future获取异步</p>
-<p>Netty 中的异步编程 Future 和 Promise Netty 中大量 I&#x2F;O 操作都是异步执行，本篇博文来聊聊 Netty 中的异步编程。Java Future 提供的异步模型JDK 5 引入了 Future 模式。Future 接口是 Java 多线程 Future 模式的实现，在 java.util.concurrent包中，可以来进行异</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16213667/7033383">https://blog.51cto.com/u_16213667/7033383</a>)</p>
-<p>.net core 获取异步方法结果 System 异步编程 线程池</p>
-</li>
-<li><p>[</p>
-<p># FastDFS+FastDHT(单机+集群版) 使用docker-compose创建FastDFS+FastDHT(单机+集 docker搭建fastdfs</p>
-<p>安装 拉取镜像docker pull delron&#x2F;fastdfs创建本机存储目录rm -fR &#x2F;home&#x2F;docker&#x2F;fastdfs&#x2F;{tracker,storage} mkdir &#x2F;home&#x2F;docker&#x2F;fastdfs&#x2F;{tracker,storage} -p启动tracker[root@VM_80_14_centos ~]# docker run -d &gt; –network&#x3D;</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_14499/7735843">https://blog.51cto.com/u_14499/7735843</a>)</p>
-<p>docker安装fastdfs fastdfs 测试客户端 fastdfs搭建 docker 上传</p>
-</li>
-<li><p>[</p>
-<p>javascript好难学啊 javascript容易学吗</p>
-<p>JavaScript给初学者的印象总是那么的“杂而乱”，相信很多初学者都在找轻松学习JavaScript的途径。我试着总结自己学习多年JavaScript的经验，希望能给后来的学习者探索出一条“轻松学习JavaScript之路”。JavaScript给人那种感觉的原因多半是因为它如下的特点：A：本身知识很抽象、晦涩难懂，如：闭包、内置对象、DOM。B：本身内容很多，如函数库，对象库就一大堆。C：混</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099297/7738890">https://blog.51cto.com/u_16099297/7738890</a>)</p>
-<p>javascript好难学啊 javascript 前端 设计模式 ViewUI</p>
-</li>
-<li><p>[</p>
-<p>《聊聊架构》 聊天框架思维实战案例</p>
-<p>各位亲： 由于过年（回家没有网络），本次更新为四篇文章。本篇是第一篇，主要介绍如何实现聊天消息的发送 框架的设计，这里主要设计到了观察者模式的应用。 首先在此祝大家新年快乐。 如果在公司某一天你的老大过来说，小张在咱们的app中的添加一个聊天功能吧（貌似支付宝正在推广这 个）。这个时候你是否一头雾水，什么IM协议，消息类型都不知道，那你要 怎么做呢？如何去调研等等工作呢？还</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16099227/7741445">https://blog.51cto.com/u_16099227/7741445</a>)</p>
-<p>《聊聊架构》 ui 框架 聊天 ide</p>
-</li>
-<li><p>[</p>
-<p>MySQL各个区服的排行榜统计成总榜 mysql服务器在哪</p>
-<p>MySQL 的服务器下载地址：<a target="_blank" rel="noopener" href="https://dev.mysql.com/downloads/mysql/5.7.html#downloadsMySQL">https://dev.mysql.com/downloads/mysql/5.7.html#downloadsMySQL</a> 安装与配置准备工作在 C 盘根目录建立目录： c:\develop解压并移动位置解压缩 mysql-5.7.23 的压缩包，将其中的 mysql-5.7.23-xxxxx 目录移动到 C:\develop 目录下并把名字修改为 mysqlMySQ</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16213674/7741934">https://blog.51cto.com/u_16213674/7741934</a>)</p>
-<p>MySQL各个区服的排行榜统计成总榜 mysql MySQL SQL</p>
-</li>
-<li><p>[</p>
-<p>spring boot nacos 修改命名空间 springboot修改包名</p>
-<p>Springboot修改项目名称包名1、在文件夹中将项目重命名 2、IDEA打开项目；3、重命名下图所示iml文件; 4、打开Project Structure，修改项目名称，改完后项目名称会对应改变； 5、打开pom.xml文件，修改两处； 6、修改配置文件application.yml中服务名； 7、修改包名：右击包名，重命名，选择Rename package，修改名称即可； 8、右击启动类重</p>
-<p>](<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_16213581/7743249">https://blog.51cto.com/u_16213581/7743249</a>)</p>
-<p>git java 远程仓库 上传 重命名</p>
-</li>
-</ul>
-<p>本文转自 <a target="_blank" rel="noopener" href="https://blog.51cto.com/u_15704977/5444805">https://blog.51cto.com/u_15704977&#x2F;5444805</a>，如有侵权，请联系删除。</p>
-
-    
-
-    
-
-    
-
-  </div>
-  <div class="article-info article-info-index">
-    
-    
-    
-
-    
-    <p class="article-more-link">
-      <a class="article-more-a" href="/2024/03/07/java/%E6%96%B0%E5%BB%BA%E6%96%87%E4%BB%B6%E5%A4%B9/java%E5%BC%82%E6%AD%A5%E4%BB%BB%E5%8A%A1%E7%BC%96%E6%8E%92-2/">展开全文 >></a>
-    </p>
-    
-
-    
-    <div class="clearfix"></div>
-  </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
     <article id="post-test/#abandon/quotation" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -1312,113 +1312,6 @@
 
 
   
-    <article id="post-c/Linking-And-Libraries/链接脚本文件-2" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-  
-  
-    <h1 itemprop="name">
-	
-	  <a class="article-title" href="/2023/08/10/c/Linking-And-Libraries/%E9%93%BE%E6%8E%A5%E8%84%9A%E6%9C%AC%E6%96%87%E4%BB%B6-2/" target="_blank">链接脚本-2</a>
-  
-    </h1>
-  
-
-
-  
-  
-<a href="/2023/08/10/c/Linking-And-Libraries/%E9%93%BE%E6%8E%A5%E8%84%9A%E6%9C%AC%E6%96%87%E4%BB%B6-2/" class="archive-article-date">
-        <time datetime="2023-08-10T02:02:35.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-08-10</time>
-</a>
-
-  
-  
-    
-
-  
-  </header>
-  
-  <div class="article-entry" itemprop="articleBody">
-    
-    <p><strong>链接脚本-2</strong></p>
-    
-    <a class="article-more-a" href="/2023/08/10/c/Linking-And-Libraries/%E9%93%BE%E6%8E%A5%E8%84%9A%E6%9C%AC%E6%96%87%E4%BB%B6-2/#more">more >></a>
-    
-    
-
-    
-
-    
-
-  </div>
-  <div class="article-info article-info-index">
-    
-    
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">elf</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-    
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/c//" class="article-tag-list-link color2">c</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/c/elf//" class="article-tag-list-link color4">elf</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/c/elf/linker//" class="article-tag-list-link color2">linker</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-    
-    <p class="article-more-link">
-      <a class="article-more-a" href="/2023/08/10/c/Linking-And-Libraries/%E9%93%BE%E6%8E%A5%E8%84%9A%E6%9C%AC%E6%96%87%E4%BB%B6-2/">展开全文 >></a>
-    </p>
-    
-
-    
-    <div class="clearfix"></div>
-  </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
     <article id="post-c/Linking-And-Libraries/链接脚本文件-1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -1497,6 +1390,113 @@
     
     <p class="article-more-link">
       <a class="article-more-a" href="/2023/08/10/c/Linking-And-Libraries/%E9%93%BE%E6%8E%A5%E8%84%9A%E6%9C%AC%E6%96%87%E4%BB%B6-1/">展开全文 >></a>
+    </p>
+    
+
+    
+    <div class="clearfix"></div>
+  </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-c/Linking-And-Libraries/链接脚本文件-2" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+  
+  
+    <h1 itemprop="name">
+	
+	  <a class="article-title" href="/2023/08/10/c/Linking-And-Libraries/%E9%93%BE%E6%8E%A5%E8%84%9A%E6%9C%AC%E6%96%87%E4%BB%B6-2/" target="_blank">链接脚本-2</a>
+  
+    </h1>
+  
+
+
+  
+  
+<a href="/2023/08/10/c/Linking-And-Libraries/%E9%93%BE%E6%8E%A5%E8%84%9A%E6%9C%AC%E6%96%87%E4%BB%B6-2/" class="archive-article-date">
+        <time datetime="2023-08-10T02:02:35.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-08-10</time>
+</a>
+
+  
+  
+    
+
+  
+  </header>
+  
+  <div class="article-entry" itemprop="articleBody">
+    
+    <p><strong>链接脚本-2</strong></p>
+    
+    <a class="article-more-a" href="/2023/08/10/c/Linking-And-Libraries/%E9%93%BE%E6%8E%A5%E8%84%9A%E6%9C%AC%E6%96%87%E4%BB%B6-2/#more">more >></a>
+    
+    
+
+    
+
+    
+
+  </div>
+  <div class="article-info article-info-index">
+    
+    
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">elf</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+    
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/c//" class="article-tag-list-link color2">c</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/c/elf//" class="article-tag-list-link color4">elf</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/c/elf/linker//" class="article-tag-list-link color2">linker</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+    
+    <p class="article-more-link">
+      <a class="article-more-a" href="/2023/08/10/c/Linking-And-Libraries/%E9%93%BE%E6%8E%A5%E8%84%9A%E6%9C%AC%E6%96%87%E4%BB%B6-2/">展开全文 >></a>
     </p>
     
 
@@ -1982,15 +1982,11 @@
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color2">Typora</a>
-              </li>
-             
-              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color4">x86</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">hexo</a>
+                <a href="javascript:void(0)" class="js-tag color2">Typora</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -2002,6 +1998,10 @@
               </li>
              
               <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">hexo</a>
+              </li>
+             
+              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color2">testXlevel2</a>
               </li>
              
@@ -2010,11 +2010,11 @@
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">blog</a>
+                <a href="javascript:void(0)" class="js-tag color5">java</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">java</a>
+                <a href="javascript:void(0)" class="js-tag color5">blog</a>
               </li>
             
             <div class="clearfix"></div>
