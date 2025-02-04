@@ -299,10 +299,10 @@
 <p>&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D; Hexo的使用<br>Hexo系列——(二) 使用Hexo发博客<br><a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_43659725/article/details/125207534">https://blog.csdn.net/weixin_43659725/article/details/125207534</a></p>
 <p>Hexo系列——(三) 将Hexo部署到Git上<br>1.配置用户名和邮箱<br>打开终端，输入指令，替换自己的github用户名和邮箱：<br>git config –global user.name “用户名”<br>git config –global user.email “邮箱”</p>
 <p>2.生成密钥SSH key：<br>ssh-keygen -t rsa -C “邮箱”<br>生成的公钥会保存在~&#x2F;.ssh&#x2F;id_ras.pub中，使用cat ~&#x2F;.ssh&#x2F;id_ras.pub查看，我们全部复制，等会要用。</p>
-<p>3.添加公钥到Github的账号<br>4.验证ssh的配置是否成功。<br>输入 ssh -T <a href="mailto:&#103;&#x69;&#116;&#x40;&#103;&#x69;&#x74;&#104;&#117;&#98;&#46;&#x63;&#x6f;&#x6d;">&#103;&#x69;&#116;&#x40;&#103;&#x69;&#x74;&#104;&#117;&#98;&#46;&#x63;&#x6f;&#x6d;</a>，验证密码，出现你的github用户名代表配置成功。You’ve successfully authenticated, but GitHub does not provide shell access.</p>
+<p>3.添加公钥到Github的账号<br>4.验证ssh的配置是否成功。<br>输入 ssh -T <a href="mailto:&#103;&#x69;&#116;&#64;&#x67;&#105;&#116;&#104;&#117;&#x62;&#46;&#x63;&#x6f;&#109;">&#103;&#x69;&#116;&#64;&#x67;&#105;&#116;&#104;&#117;&#x62;&#46;&#x63;&#x6f;&#109;</a>，验证密码，出现你的github用户名代表配置成功。You’ve successfully authenticated, but GitHub does not provide shell access.</p>
 <p>5.创建仓库<br>取一个仓库名，我直接使用我的用户名，但要注意，一定要在结尾加上.github.io &#x3D;&#x3D;&gt; 用户名.github.io<br>仓库code页面点击Settings&gt;Pages，这个链接就是你的博客地址，点进去是404，这是因为现在我们的Hexo还没部署上去，网站什么都没有。</p>
-<p>依赖与配置文件:<br>$ npm install hexo-deployer-git –save<br>修改配置文件:<br>deploy:<br>  type: git<br>  repository: ssh:&#x2F;&#x2F;<a href="mailto:&#103;&#105;&#x74;&#x40;&#x67;&#x69;&#116;&#x68;&#117;&#98;&#46;&#99;&#111;&#x6d;">&#103;&#105;&#x74;&#x40;&#x67;&#x69;&#116;&#x68;&#117;&#98;&#46;&#99;&#111;&#x6d;</a>&#x2F;用户名&#x2F;仓库名.github.io.git<br>  &#x2F;&#x2F; 比如我的就是repository: ssh:&#x2F;&#x2F;<a href="mailto:&#103;&#x69;&#116;&#64;&#103;&#x69;&#116;&#x68;&#x75;&#x62;&#x2e;&#x63;&#111;&#109;">&#103;&#x69;&#116;&#64;&#103;&#x69;&#116;&#x68;&#x75;&#x62;&#x2e;&#x63;&#111;&#109;</a>&#x2F;xxxx&#x2F;xxxx.github.io.git<br>  brandh: master<br>  messge:</p>
-<p>6.部署<br>每次重新开一个新的终端都要重新连接git：ssh -T <a href="mailto:&#103;&#x69;&#x74;&#x40;&#103;&#x69;&#116;&#x68;&#x75;&#98;&#x2e;&#99;&#x6f;&#x6d;">&#103;&#x69;&#x74;&#x40;&#103;&#x69;&#116;&#x68;&#x75;&#98;&#x2e;&#99;&#x6f;&#x6d;</a><br>执行下面命令，然后再次进入Pages的链接用户名.github.io就可以看到你的博客了。<br>hexo generate &amp;&amp; hexo deploy  或则  hexo g -d</p>
+<p>依赖与配置文件:<br>$ npm install hexo-deployer-git –save<br>修改配置文件:<br>deploy:<br>  type: git<br>  repository: ssh:&#x2F;&#x2F;<a href="mailto:&#x67;&#105;&#116;&#64;&#103;&#x69;&#x74;&#104;&#117;&#98;&#x2e;&#99;&#111;&#109;">&#x67;&#105;&#116;&#64;&#103;&#x69;&#x74;&#104;&#117;&#98;&#x2e;&#99;&#111;&#109;</a>&#x2F;用户名&#x2F;仓库名.github.io.git<br>  &#x2F;&#x2F; 比如我的就是repository: ssh:&#x2F;&#x2F;<a href="mailto:&#x67;&#105;&#x74;&#x40;&#103;&#105;&#116;&#x68;&#x75;&#x62;&#x2e;&#99;&#111;&#x6d;">&#x67;&#105;&#x74;&#x40;&#103;&#105;&#116;&#x68;&#x75;&#x62;&#x2e;&#99;&#111;&#x6d;</a>&#x2F;xxxx&#x2F;xxxx.github.io.git<br>  brandh: master<br>  messge:</p>
+<p>6.部署<br>每次重新开一个新的终端都要重新连接git：ssh -T <a href="mailto:&#x67;&#105;&#116;&#64;&#103;&#105;&#116;&#104;&#117;&#98;&#46;&#x63;&#x6f;&#109;">&#x67;&#105;&#116;&#64;&#103;&#105;&#116;&#104;&#117;&#98;&#46;&#x63;&#x6f;&#109;</a><br>执行下面命令，然后再次进入Pages的链接用户名.github.io就可以看到你的博客了。<br>hexo generate &amp;&amp; hexo deploy  或则  hexo g -d</p>
 <p>参考资料: <a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_43659725/article/details/125207584">https://blog.csdn.net/weixin_43659725/article/details/125207584</a></p>
 <p>&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D; bug的解决<br>Hexo中图片无法加载<br><a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_43659725/article/details/125329275">https://blog.csdn.net/weixin_43659725/article/details/125329275</a></p>
 <p>首先确认根目录_config.yml中有: post_asset_folder: true<br>然后在hexo站点终端下执行: npm install <a target="_blank" rel="noopener" href="https://github.com/CodeFalling/hexo-asset-image">https://github.com/CodeFalling/hexo-asset-image</a> –save			&#x2F;&#x2F; npm install hexo-asset-image –save<br>确保在&#x2F;source&#x2F;_posts下创建和md文件同名的目录，在里面放该md需要的图片，然后在md中插入:<br>![我是图片下方说明](目录名&#x2F;文件名.png)<br>配置完成之后,开启服务器查看,goto 发布</p>
@@ -670,11 +670,15 @@ gitalk.render('gitment-ctn')
           <ul class="article-tag-list" q-show="showTags">
              
               <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color2">Typora</a>
+              </li>
+             
+              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color4">x86</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color2">Typora</a>
+                <a href="javascript:void(0)" class="js-tag color4">elf</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -695,10 +699,6 @@ gitalk.render('gitment-ctn')
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">hexo</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color4">elf</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -987,6 +987,6 @@ gitalk.render('gitment-ctn')
     });
   </script>
   
-</body>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"log":false,"pluginJsPath":"lib/","pluginModelPath":"assets/","pluginRootPath":"live2dw/","tagMode":false});</script></body>
 
 </html>
