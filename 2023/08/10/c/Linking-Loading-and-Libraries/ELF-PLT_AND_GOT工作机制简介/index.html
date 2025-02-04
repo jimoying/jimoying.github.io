@@ -364,7 +364,7 @@
 <p>0x400460 &lt;__libc_start_main@plt&gt;:  0x90000110  0xf9400211  0x91000210  0xd61f0220</p>
 <p>0x400470 &lt;__gmon_start__@plt&gt;: 0x90000110  0xf9400611  0x91002210  0xd61f0220</p>
 <p>0x400480 &lt;abort@plt&gt;:  0x90000110  0xf9400a11  0x91004210  0xd61f0220</p>
-<p>会调用 _dl_runtime_resolve 解析 puts 函数的地址，并将该函数真正的地址填充到 <a href="mailto:&#x70;&#117;&#x74;&#x73;&#64;&#103;&#x6f;&#x74;&#46;&#112;&#108;&#x74;">&#x70;&#117;&#x74;&#x73;&#64;&#103;&#x6f;&#x74;&#46;&#112;&#108;&#x74;</a>，最后跳转到 puts 函数继续执行代码。</p>
+<p>会调用 _dl_runtime_resolve 解析 puts 函数的地址，并将该函数真正的地址填充到 <a href="mailto:&#112;&#x75;&#116;&#x73;&#x40;&#x67;&#x6f;&#x74;&#46;&#112;&#x6c;&#116;">&#112;&#x75;&#116;&#x73;&#x40;&#x67;&#x6f;&#x74;&#46;&#112;&#x6c;&#116;</a>，最后跳转到 puts 函数继续执行代码。</p>
 <p>继续gdb调试执行后如下：</p>
 <p>(gdb) s</p>
 <p>hello, world</p>
@@ -542,18 +542,18 @@
 
 <nav id="article-nav">
   
-    <a href="/2023/08/10/assembled/x86%E6%B1%87%E7%BC%96-%E6%AE%B5%E9%80%89%E6%8B%A9%E5%AD%90-%E7%89%B9%E6%9D%83%E7%BA%A7/" id="article-nav-newer" class="article-nav-link-wrap">
+    <a href="/2023/08/10/c/Linking-And-Libraries/%E9%93%BE%E6%8E%A5%E8%84%9A%E6%9C%AC%E6%96%87%E4%BB%B6-2/" id="article-nav-newer" class="article-nav-link-wrap">
       <i class="icon-circle-left"></i>
       <div class="article-nav-title">
         
-          x86汇编-段选择子-特权级
+          链接脚本-2
         
       </div>
     </a>
   
   
-    <a href="/2023/08/10/c/Linking-And-Libraries/%E9%93%BE%E6%8E%A5%E8%84%9A%E6%9C%AC%E6%96%87%E4%BB%B6-1/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title">链接脚本-1</div>
+    <a href="/2022/12/01/blog/common/shuoshuo/shuoshuo/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">语录1</div>
       <i class="icon-circle-right"></i>
     </a>
   
@@ -761,11 +761,11 @@ gitalk.render('gitment-ctn')
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color4">x86</a>
+                <a href="javascript:void(0)" class="js-tag color2">Typora</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color2">Typora</a>
+                <a href="javascript:void(0)" class="js-tag color4">x86</a>
               </li>
              
               <li class="article-tag-list-item">
